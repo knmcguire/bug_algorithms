@@ -42,6 +42,9 @@ class BugAlgorithms:
     WF=wall_following.WallFollowing()
     reset_bug = False
     random_environment = False;
+    odometry=[0,0];
+    twist = Twist()
+
 
     def getController(self,argument):
         switcher = {
@@ -72,7 +75,7 @@ class BugAlgorithms:
 
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
-            start_sim(2)
+            start_sim(1,1)
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
             
@@ -103,10 +106,10 @@ class BugAlgorithms:
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
             if(self.random_environment):
-                start_sim(1)
+                start_sim(1,1)
                 self.random_environment = False
             else:
-                start_sim(2)
+                start_sim(2,1)
 
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
@@ -123,24 +126,33 @@ class BugAlgorithms:
             self.WF.init()
             self.bug_controller.__init__()
             self.reset_bug = False
+            self.odometry= [0,0];
            
-           
+        print self.get_odometry_from_commands()
+        
         print self.RRT.getUWBRange()    
         if (self.RRT.getUWBRange()>100):
-            return GetCmdsResponse(self.bug_controller.stateMachine(self.RRT))
+            self.twist = self.bug_controller.stateMachine(self.RRT)
+            return GetCmdsResponse(self.twist)
         else: 
             print "bug has reached goal"
-            twist = Twist()
-            twist.linear.x = 0
-            twist.angular.z = 0
-            return GetCmdsResponse(twist)
-        
+            self.twist.linear.x = 0
+            self.twist.angular.z = 0
+            return GetCmdsResponse(self.twist)
+    
+    def get_odometry_from_commands(self):
+        self.odometry[0] = self.odometry[0] + self.twist.linear.x*35*math.cos(self.RRT.getHeading())
+        self.odometry[1] = self.odometry[1] + self.twist.linear.x*35*math.sin(self.RRT.getHeading())
+
+        return self.odometry
         
     def random_environment(self,req):
         self.random_environment = req.data;
 
     
 if __name__ == '__main__':
+    
+    time.sleep(2)
     rospy.init_node("bug_algorithms")
     controller = BugAlgorithms()
     #rospy.wait_for_service('get_vel_cmd')
