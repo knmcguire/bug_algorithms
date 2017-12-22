@@ -11,23 +11,24 @@ environment_random_pub = rospublisher('/random_environment','std_msgs/Bool');
 msg = rosmessage(switch_bug_pub);
 msg_env = rosmessage(environment_random_pub);
 
-amount_of_bugs = 3;
-amount_of_environments = 9;
+amount_of_bugs = 6;
+amount_of_environments = 50;
 for itk = 1:amount_of_environments
+    disp(itk)
     msg_env.Data = 1;
     send(environment_random_pub,msg_env);
     for it = 1:amount_of_bugs
         
         msg.Data = bug_names{it};
-        send(switch_bug_pub,msg) ;
+        send(switch_bug_pub,msg);
         disp("Send out switch bug message")
-        
-        pause(5)
+
+        pause(2)
         sub = rossubscriber('/finished_sim_matlab');
         receive(sub);
         
         disp("Simulation is Finished")
-        pause(3)
+        pause(5)
 
         results.environment(itk).bug(it).bug_name = bug_names{it};
         results.environment(itk).bug(it).trajectory = csvread("/home/knmcguire/.ros/trajectory.txt");
@@ -35,14 +36,18 @@ for itk = 1:amount_of_environments
         results.environment(itk).bug(it).distances = csvread("/home/knmcguire/.ros/distances.txt");
 
     end
-    figure(1)
     results.environment(itk).img= imread('/home/knmcguire/.ros/environment.png');
+        results.environment(itk).init_position= csvread('/home/knmcguire/.ros/init_position.txt');
+
     if itk < 9
+            figure(1)
+
         subplot(3,3,itk),imshow(imresize(results.environment(itk).img',2))
+        for it = 1:amount_of_bugs
+            hold on, plot(20*(results.environment(itk).bug(it).trajectory(:,2)+7),20*(results.environment(itk).bug(it).trajectory(:,1)+7))
+        end
     end
-    for it = 1:amount_of_bugs
-        hold on, plot(20*(results.environment(itk).bug(it).trajectory(:,2)+5),20*(results.environment(itk).bug(it).trajectory(:,1)+5))
-    end
+
     
     
 end

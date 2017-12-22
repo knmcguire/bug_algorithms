@@ -150,7 +150,7 @@ class WallFollowing:
             if (self.time - self.state_start_time)<self.distance_go_around_corner/0.35 * 10 and self.has_alligned == True:
                 twist = self.twistForward()
             elif (self.time - self.state_start_time)>self.distance_go_around_corner/0.35 * 10  and self.has_alligned == True:
-                twist = self.twistTurnAroundCorner(self.last_range_side_before_lost+0.3,direction)
+                twist = self.twistTurnAroundCorner(self.last_range_side_before_lost+0.25,direction)
         elif self.state == "STOP_MOVING":
             twist = self.twistStop()  
         else:

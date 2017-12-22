@@ -20,6 +20,7 @@ from argos_bridge.srv import GetCmdsResponse
 from argos_bridge.srv import SwitchBug
 from std_msgs.msg import String
 from std_msgs.msg import Bool
+from std_srvs.srv import Empty
 
 import com_bug_controller
 import bug_2_controller
@@ -70,6 +71,7 @@ class BugAlgorithms:
         rospy.Subscriber('/random_environment', Bool, self.random_environment,queue_size=10)
 
         rospy.wait_for_service('/start_sim')
+
         s1 = rospy.Service('get_vel_cmd',GetCmds,self.runStateMachine)
         #s2 = rospy.Service('switch_bug',SwitchBug,self.switchBug)
 
@@ -80,7 +82,7 @@ class BugAlgorithms:
             print "Service call failed: %s"%e
             
         #full_param_name = rospy.search_param('bug_type')
-        bug_type =  "wf"#rospy.get_param(full_param_name)
+        bug_type = 'wf'#rospy.get_param(full_param_name)
         
         self.bug_controller = self.getController(bug_type);
         if self.bug_controller == False:
@@ -118,6 +120,12 @@ class BugAlgorithms:
             
     def runStateMachine(self, req):   
         
+        rospy.wait_for_service('/stop_sim')
+        try:
+            stop_sim = rospy.ServiceProxy('/stop_sim', Empty)
+        except rospy.ServiceException, e:
+            print "Service call failed: %s"%e
+        
         self.RRT.prox_callback(req.proxList);
         self.RRT.rab_callback(req.RabList);
         self.RRT.pose_callback(req.PosQuat);
@@ -128,9 +136,6 @@ class BugAlgorithms:
             self.reset_bug = False
             self.odometry= [0,0];
            
-        print self.get_odometry_from_commands()
-        
-        print self.RRT.getUWBRange()    
         if (self.RRT.getUWBRange()>100):
             self.twist = self.bug_controller.stateMachine(self.RRT)
             return GetCmdsResponse(self.twist)
@@ -138,7 +143,9 @@ class BugAlgorithms:
             print "bug has reached goal"
             self.twist.linear.x = 0
             self.twist.angular.z = 0
+            stop_sim()
             return GetCmdsResponse(self.twist)
+
     
     def get_odometry_from_commands(self):
         self.odometry[0] = self.odometry[0] + self.twist.linear.x*35*math.cos(self.RRT.getHeading())
