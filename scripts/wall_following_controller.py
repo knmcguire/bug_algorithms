@@ -37,6 +37,8 @@ class WallFollowController:
     def __init__(self):
         self.distance_to_wall=self.WF.getWantedDistanceToWall();
         self.direction = self.WF.getDirectionTurn();
+        self.state =  "FORWARD"
+
         
         
     def rosLoop(self):

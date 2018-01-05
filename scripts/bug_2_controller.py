@@ -50,9 +50,12 @@ class Bug2Controller:
         self.last_bearing = 0;
         self.stateStartTime = 0;
         self.obstacle_is_hit = 0;
-        self.first_run = 0;
+        self.first_run = 1;
         self.state =  "ROTATE_TO_GOAL"
+        self.bot_tower_slope = 0
+        self.previous_leave_point =1000.0;
 
+        
     def stateMachine(self,RRT):
         
         self.RRT = RRT
@@ -79,15 +82,18 @@ class Bug2Controller:
             bot_tower_slope_run = (self.pose_tower.pose.position.y -bot_pose.pose.position.y)/(self.pose_tower.pose.position.x -bot_pose.pose.position.x);
             bot_tower_y_diff = self.pose_tower.pose.position.y -bot_pose.pose.position.y
             bot_tower_x_diff = self.pose_tower.pose.position.x -bot_pose.pose.position.x
-            
+        
+        print('bot_tower_slope',self.bot_tower_slope)
+        
         # Handle State transition
         if self.state == "FORWARD": 
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall: #If an obstacle comes within the distance of the wall
                 self.hitpoint = self.RRT.getPoseBot();
+                self.previous_hit_point = self.RRT.getUWBRange();
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING": 
             if self.logicIsCloseTo(self.bot_tower_slope, bot_tower_slope_run,0.1) and\
-            bot_tower_x_diff>0 and\
+            bot_tower_x_diff>0 and  self.RRT.getUWBRange()<self.previous_hit_point and\
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision())!=True)): 
                 self.transition("ROTATE_TO_GOAL")

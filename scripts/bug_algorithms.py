@@ -82,7 +82,8 @@ class BugAlgorithms:
             print "Service call failed: %s"%e
             
         #full_param_name = rospy.search_param('bug_type')
-        bug_type = 'wf'#rospy.get_param(full_param_name)
+        bug_type = rospy.get_param('/bot0/bug_algorithms/bug_type')
+        
         
         self.bug_controller = self.getController(bug_type);
         if self.bug_controller == False:
@@ -110,8 +111,11 @@ class BugAlgorithms:
             if(self.random_environment):
                 start_sim(1,1)
                 self.random_environment = False
+                print "python, send regenerate environment"
             else:
                 start_sim(2,1)
+                print "python, reset experiment with same environment"
+
 
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e

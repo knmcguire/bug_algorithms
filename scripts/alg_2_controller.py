@@ -56,7 +56,8 @@ class Alg2Controller:
         self.first_rotate = True;
         self.heading_before_turning = 0;
         self.state =  "ROTATE_TO_GOAL"
-        
+        self.previous_hit_point =1000.0;
+
     # Ros loop were the rate of the controller is handled
     def rosLoop(self):
         rate = rospy.Rate(30)
@@ -85,7 +86,7 @@ class Alg2Controller:
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1: #If an obstacle comes within the distance of the wall
                 self.hitpoint = self.RRT.getPoseBot();
                 self.transition("WALL_FOLLOWING")
-                self.hitpoint = self.RRT.getPoseBot();
+                self.previous_hit_point = self.RRT.getUWBRange()
                 if self.checkHitPoints(self.hitpoint):
                     print "already hit point!"
                     self.rotated_half_once = True
@@ -102,7 +103,7 @@ class Alg2Controller:
                 self.WF.init()
                 self.direction = -1*self.direction
                 self.heading_before_turning = self.RRT.getHeading() 
-            if range_front>=2.0 and \
+            if range_front>=2.0 and  self.RRT.getUWBRange()<self.previous_hit_point and\
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,0.05)!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,0.05)!=True)): 
                 self.transition("ROTATE_TO_GOAL")

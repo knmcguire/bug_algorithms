@@ -56,8 +56,8 @@ class WallFollowing:
         self.last_time = 0
         self.has_alligned = False;
         self.direction_turn = 1
-        self.distance_from_wall = 0.5
-        self.distance_go_around_corner_90 = 2.5*0.35;
+        self.distance_from_wall = 0.4
+        self.distance_go_around_corner_90 = 2.3*0.35;
         self.location_precision = 0.5
         print "RESET"
         print self.direction_turn
@@ -79,7 +79,7 @@ class WallFollowing:
             self.transition("ROTATE_TO_ALIGN_WALL")
         elif self.state=="ROTATE_TO_ALIGN_WALL":
             self.last_time = time_argos
-            if self.logicIsCloseTo(range_side,range_front*math.cos(numpy.deg2rad(60)), 0.2):
+            if self.logicIsCloseTo(range_side,range_front*math.cos(numpy.deg2rad(60)), 0.1):
                 self.transition("WALL_FOLLOWING")
             # if front range is lost, assume you are on the brink of a corner
             if range_front > 2.0:
@@ -101,6 +101,8 @@ class WallFollowing:
             if range_front > 2.0:
                 self.last_range_front_before_lost = self.last_range_front
                 self.last_range_side_before_lost =  self.last_range_side
+
+
                 self.last_heading_before_lost = self.last_heading
                 # Since with wall following, we arlready assume that the bot is alligned with the wall, therefore these assumptions
                 self.heading_when_started_turning = current_heading + 1.50
@@ -109,7 +111,7 @@ class WallFollowing:
                 self.transition("ROTATE_AROUND_CORNER")
         elif self.state=="ROTATE_AROUND_CORNER":
             # If the wall is found by the wanted triangle by ranges, go to wall following
-            if self.logicIsCloseTo(range_side,range_front*math.cos(numpy.deg2rad(60)), 0.1):
+            if self.logicIsCloseTo(range_side,range_front*math.cos(numpy.deg2rad(60)), 0.1) and self.logicIsCloseTo( self.last_heading_before_lost,current_heading, 1.50):
                 self.transition("WALL_FOLLOWING")
             # If a obstacle is seen, assume you are in a corner so align with wall
             if closest_obstacle<self.distance_from_wall + 0.1:
@@ -137,7 +139,6 @@ class WallFollowing:
             twist = self.twistTurnInCorner(direction)
         elif self.state == "ROTATE_AROUND_CORNER":
             twist = self.twistStop()  
-            
             print self.heading_when_started_turning
             #TODO: do this based on odometry!
             if(current_heading-self.heading_when_started_turning>-1.50) and self.has_alligned == False:
@@ -147,10 +148,16 @@ class WallFollowing:
                 self.state_start_time = self.time
             if self.distance_go_around_corner > self.distance_go_around_corner_90:
                 self.distance_go_around_corner = self.distance_go_around_corner_90
+
             if (self.time - self.state_start_time)<self.distance_go_around_corner/0.35 * 10 and self.has_alligned == True:
                 twist = self.twistForward()
+                print "go forward"
             elif (self.time - self.state_start_time)>self.distance_go_around_corner/0.35 * 10  and self.has_alligned == True:
                 twist = self.twistTurnAroundCorner(self.last_range_side_before_lost+0.25,direction)
+                if(self.last_range_side_before_lost>999):
+                    self.last_range_side_before_lost = self.distance_from_wall
+                print("start_turning", self.last_range_side_before_lost+0.25);
+
         elif self.state == "STOP_MOVING":
             twist = self.twistStop()  
         else:
