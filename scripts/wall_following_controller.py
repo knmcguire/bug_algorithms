@@ -50,7 +50,7 @@ class WallFollowController:
             rate.sleep()
 
     
-    def stateMachine(self,RRT):
+    def stateMachine(self,RRT,odometry):
         
         self.RRT = RRT
         

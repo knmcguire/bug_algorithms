@@ -21,6 +21,7 @@ from geometry_msgs.msg import Twist
 from scipy.stats._continuous_distns import beta
 import wall_following 
 import receive_rostopics
+from copy import deepcopy
 
 class Alg2Controller:
     state = "ROTATE_TO_GOAL"
@@ -66,7 +67,7 @@ class Alg2Controller:
             rate.sleep()
 
     
-    def stateMachine(self,RRT):
+    def stateMachine(self,RRT,odometry):   
         self.RRT = RRT   
         
         range_front = 1000.0
@@ -84,8 +85,9 @@ class Alg2Controller:
         # Handle State transition
         if self.state == "FORWARD": 
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1: #If an obstacle comes within the distance of the wall
-                self.hitpoint = self.RRT.getPoseBot();
-                self.transition("WALL_FOLLOWING")
+                #self.hitpoint = self.RRT.getPoseBot();
+                self.hitpoint.pose.position.x = odometry.pose.position.x;
+                self.hitpoint.pose.position.y = odometry.pose.position.y;
                 self.previous_hit_point = self.RRT.getUWBRange()
                 if self.checkHitPoints(self.hitpoint):
                     print "already hit point!"
@@ -93,10 +95,12 @@ class Alg2Controller:
                     self.direction = -1*self.direction
                 else:
                     print "Did not hit point"
+                self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING":
-            bot_pose = self.RRT.getPoseBot();
-            #If wall is lost by corner, rotate to goal again
-            if self.checkHitPoints(self.RRT.getPoseBot()) and self.rotated_half_once == False and \
+            bot_pose = PoseStamped();
+            bot_pose.pose.position.x = odometry.pose.position.x;
+            bot_pose.pose.position.y = odometry.pose.position.y;            #If wall is lost by corner, rotate to goal again
+            if self.checkHitPoints(bot_pose) and self.rotated_half_once == False and \
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision())!=True)):
                 self.transition("ROTATE_180")
@@ -109,7 +113,7 @@ class Alg2Controller:
                 self.transition("ROTATE_TO_GOAL")
                 self.last_bearing = self.RRT.getUWBBearing()
                 self.WF.init()
-                self.hit_points.append(self.hitpoint)
+                self.hit_points.append(deepcopy(self.hitpoint))
                 print "saved hitpoint"
         elif self.state=="ROTATE_TO_GOAL":
             if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.05) :
@@ -122,7 +126,6 @@ class Alg2Controller:
                     self.transition("WALL_FOLLOWING")
                     self.first_rotate = False
         elif self.state=="ROTATE_180":
-            print math.fabs(self.wrap_pi(self.RRT.getHeading()-self.heading_before_turning))
             if math.fabs(self.wrap_pi(self.RRT.getHeading()-self.heading_before_turning))>3.04:
                 self.rotated_half_once = True
                 self.transition("TURN_COMP") 

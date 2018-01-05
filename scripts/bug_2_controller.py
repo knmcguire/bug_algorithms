@@ -56,7 +56,7 @@ class Bug2Controller:
         self.previous_leave_point =1000.0;
 
         
-    def stateMachine(self,RRT):
+    def stateMachine(self,RRT,odometry):   
         
         self.RRT = RRT
  
@@ -83,15 +83,18 @@ class Bug2Controller:
             bot_tower_y_diff = self.pose_tower.pose.position.y -bot_pose.pose.position.y
             bot_tower_x_diff = self.pose_tower.pose.position.x -bot_pose.pose.position.x
         
-        print('bot_tower_slope',self.bot_tower_slope)
         
         # Handle State transition
         if self.state == "FORWARD": 
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall: #If an obstacle comes within the distance of the wall
-                self.hitpoint = self.RRT.getPoseBot();
+               # self.hitpoint = self.RRT.getPoseBot();
+                self.hitpoint.pose.position.x = odometry.pose.position.x;
+                self.hitpoint.pose.position.y = odometry.pose.position.y;
                 self.previous_hit_point = self.RRT.getUWBRange();
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING": 
+            bot_pose.pose.position.x = odometry.pose.position.x;
+            bot_pose.pose.position.y = odometry.pose.position.y;  
             if self.logicIsCloseTo(self.bot_tower_slope, bot_tower_slope_run,0.1) and\
             bot_tower_x_diff>0 and  self.RRT.getUWBRange()<self.previous_hit_point and\
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())!=True ) or \
@@ -114,7 +117,6 @@ class Bug2Controller:
 
         elif self.state=="ROTATE_TO_GOAL":
             #First go forward for 2 seconds (to get past any corner, and then turn
-            print self.last_bearing
             if self.last_bearing>0:
                 twist = self.WF.twistTurnInCorner(-1)
             else:

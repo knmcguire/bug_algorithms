@@ -48,7 +48,7 @@ class ComBugController:
         self.stateStartTime = 0;
         self.state =  "ROTATE_TO_GOAL"
             
-    def stateMachine(self,RRT):   
+    def stateMachine(self,RRT,odometry):   
         
         self.RRT = RRT
         
@@ -66,11 +66,18 @@ class ComBugController:
         if self.state == "FORWARD": 
             print self.RRT.getRealDistanceToWall()
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1: #If an obstacle comes within the distance of the wall
-                self.hitpoint = self.RRT.getPoseBot();
+               # self.hitpoint = self.RRT.getPoseBot();
+                self.hitpoint.pose.position.x = odometry.pose.position.x;
+                self.hitpoint.pose.position.y = odometry.pose.position.y;
+
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING":
-            bot_pose = self.RRT.getPoseBot();
-            #If wall is lost by corner, rotate to goal again
+            #bot_pose = self.RRT.getPoseBot();
+            bot_pose = PoseStamped();
+            bot_pose.pose.position.x = odometry.pose.position.x;
+            bot_pose.pose.position.y = odometry.pose.position.y;  
+
+                       #If wall is lost by corner, rotate to goal again
             if range_front>=2.0 and \
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,0.05)!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,0.05)!=True)): 

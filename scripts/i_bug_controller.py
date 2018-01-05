@@ -55,7 +55,7 @@ class IBugController:
         self.heading_before_turning = 0;
         self.state =  "ROTATE_TO_GOAL"
     
-    def stateMachine(self, RRT):
+    def stateMachine(self,RRT,odometry):   
         self.RRT = RRT    
         
         range_front = 1000.0
@@ -72,10 +72,13 @@ class IBugController:
         if self.state == "FORWARD": 
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1: #If an obstacle comes within the distance of the wall
                 self.previous_hit_point = self.RRT.getUWBRange()
-                self.hitpoint = self.RRT.getPoseBot();
+                self.hitpoint.pose.position.x = odometry.pose.position.x;
+                self.hitpoint.pose.position.y = odometry.pose.position.y
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING": 
-            bot_pose = self.RRT.getPoseBot();
+            bot_pose = PoseStamped();
+            bot_pose.pose.position.x = odometry.pose.position.x;
+            bot_pose.pose.position.y = odometry.pose.position.y;  
              #If wall is lost by corner, rotate to goal again
             if range_front>=2.0 and self.RRT.getUWBRange()<self.previous_hit_point and \
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,0.05)!=True ) or \
@@ -85,7 +88,6 @@ class IBugController:
                 self.WF.init()
         elif self.state=="ROTATE_TO_GOAL":
             self.previous_leave_point = self.RRT.getUWBRange()
-            print self.RRT.getRealDistanceToWall()
             if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.05) :
                 self.first_rotate = False
                 self.transition("FORWARD")

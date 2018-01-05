@@ -15,6 +15,7 @@ from argos_bridge.msg import Rangebearing
 from argos_bridge.msg import RangebearingList
 from geometry_msgs.msg import PoseStamped
 from neat_ros.srv import StartSim
+from copy import deepcopy
 
 
 from geometry_msgs.msg import Twist
@@ -68,7 +69,7 @@ class Alg1Controller:
 
 
     
-    def stateMachine(self,RRT): 
+    def stateMachine(self,RRT,odometry):   
         self.RRT = RRT
 
         range_front = 1000.0
@@ -96,12 +97,14 @@ class Alg1Controller:
             bot_tower_y_diff = self.pose_tower.pose.position.y -bot_pose.pose.position.y
             bot_tower_x_diff = self.pose_tower.pose.position.x -bot_pose.pose.position.x
 
+
         # Handle State transition
         if self.state == "FORWARD": 
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1: #If an obstacle comes within the distance of the wall
-                self.hitpoint = self.RRT.getPoseBot();
+                #self.hitpoint = self.RRT.getPoseBot();
+                self.hitpoint.pose.position.x = odometry.pose.position.x;
+                self.hitpoint.pose.position.y = odometry.pose.position.y;
                 self.previous_hit_point = self.RRT.getUWBRange();              
-
                 if self.checkHitPoints(self.hitpoint):
                     print "already hit point!"
                     self.rotated_half_once = True
@@ -110,6 +113,9 @@ class Alg1Controller:
                     print "Did not hit point"
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING": 
+            bot_pose = PoseStamped();
+            bot_pose.pose.position.x = odometry.pose.position.x;
+            bot_pose.pose.position.y = odometry.pose.position.y;
             if self.logicIsCloseTo(self.bot_tower_slope, bot_tower_slope_run,0.02) and \
              bot_tower_x_diff>0 and  self.RRT.getUWBRange()<self.previous_hit_point and\
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,0.5)!=True) or \
@@ -117,10 +123,10 @@ class Alg1Controller:
                 self.transition("ROTATE_TO_GOAL")
                 self.last_bearing = self.RRT.getUWBBearing()
                 self.WF.init()
-                self.hit_points.append(self.hitpoint)
+                self.hit_points.append(deepcopy(self.hitpoint))
                 print "saved hitpoint"
             print("already rotated", self.rotated_half_once)
-            if self.checkHitPoints(self.RRT.getPoseBot()) and self.rotated_half_once == False and \
+            if self.checkHitPoints(bot_pose) and self.rotated_half_once == False and \
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision())!=True)):
                 self.transition("ROTATE_180")
@@ -156,7 +162,6 @@ class Alg1Controller:
         elif self.state=="ROTATE_TO_GOAL":
             #First go forward for 2 seconds (to get past any corner, and then turn
             
-            print self.last_bearing
             if self.last_bearing>0:
                 twist = self.WF.twistTurnInCorner(-1)
             else:
@@ -194,10 +199,9 @@ class Alg1Controller:
         
     
     def checkHitPoints(self,bot_pose):
-        
         for i in range(0,len(self.hit_points)):
-            if ((self.logicIsCloseTo(self.hit_points[i].pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())==True ) and \
-            (self.logicIsCloseTo(self.hit_points[i].pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision())==True)):
+            if ((self.logicIsCloseTo(self.hit_points[i].pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision()) ) and \
+            (self.logicIsCloseTo(self.hit_points[i].pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision()))):
                 return True
         return False
             

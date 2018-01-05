@@ -138,10 +138,11 @@ class BugAlgorithms:
             self.WF.init()
             self.bug_controller.__init__()
             self.reset_bug = False
-            self.odometry= [0,0];
+            self.odometry = PoseStamped()
+
            
         if (self.RRT.getUWBRange()>100):
-            self.twist = self.bug_controller.stateMachine(self.RRT)
+            self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0))
             return GetCmdsResponse(self.twist)
         else: 
             print "bug has reached goal"
@@ -151,10 +152,14 @@ class BugAlgorithms:
             return GetCmdsResponse(self.twist)
 
     
-    def get_odometry_from_commands(self):
-        self.odometry[0] = self.odometry[0] + self.twist.linear.x*35*math.cos(self.RRT.getHeading())
-        self.odometry[1] = self.odometry[1] + self.twist.linear.x*35*math.sin(self.RRT.getHeading())
+    def get_odometry_from_commands(self,noise):
+        if noise == 0:
+            noisy_velocity_estimate = self.twist.linear.x*0.035
+        else:
+            noisy_velocity_estimate = numpy.random.normal(self.twist.linear.x*0.035,noise,1);
 
+        self.odometry.pose.position.x = self.odometry.pose.position.x + noisy_velocity_estimate*math.cos(self.RRT.getHeading())
+        self.odometry.pose.position.y = self.odometry.pose.position.y + noisy_velocity_estimate*math.sin(self.RRT.getHeading())
         return self.odometry
         
     def random_environment(self,req):

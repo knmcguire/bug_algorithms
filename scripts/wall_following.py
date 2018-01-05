@@ -98,7 +98,7 @@ class WallFollowing:
                 self.heading_when_started_turning = current_heading
                 self.transition("ROTATE_TO_ALIGN_WALL")
             # If Front range is lost, you are on the brink of a corner
-            if range_front > 2.0:
+            if range_front > 2.0 :
                 self.last_range_front_before_lost = self.last_range_front
                 self.last_range_side_before_lost =  self.last_range_side
 
@@ -107,6 +107,7 @@ class WallFollowing:
                 # Since with wall following, we arlready assume that the bot is alligned with the wall, therefore these assumptions
                 self.heading_when_started_turning = current_heading + 1.50
                 self.distance_go_around_corner = self.distance_go_around_corner_90
+                
                 self.has_alligned = True
                 self.transition("ROTATE_AROUND_CORNER")
         elif self.state=="ROTATE_AROUND_CORNER":
@@ -135,11 +136,9 @@ class WallFollowing:
             # Do simple wall following based on the front range sensor of the wedge and the the left sensor
             twist = self.twistWallFollowing(range_side, range_front)     
         elif self.state== "ROTATE_TO_ALIGN_WALL":
-            print self.direction_turn
             twist = self.twistTurnInCorner(direction)
         elif self.state == "ROTATE_AROUND_CORNER":
             twist = self.twistStop()  
-            print self.heading_when_started_turning
             #TODO: do this based on odometry!
             if(current_heading-self.heading_when_started_turning>-1.50) and self.has_alligned == False:
                 twist = self.twistTurnInCorner(direction)
