@@ -22,6 +22,8 @@ from scipy.stats._continuous_distns import beta
 import wall_following 
 import receive_rostopics
 
+from copy import deepcopy
+
 class ComBugController:
 
     WF=wall_following.WallFollowing()
@@ -47,7 +49,10 @@ class ComBugController:
         self.last_bearing = 0;
         self.stateStartTime = 0;
         self.state =  "ROTATE_TO_GOAL"
-            
+        self.pose_tower = PoseStamped();
+        self.first_run = 1
+        self.current_UWB_bearing = 2000
+        
     def stateMachine(self,RRT,odometry):   
         
         self.RRT = RRT
@@ -60,8 +65,39 @@ class ComBugController:
         elif self.direction is -1:
             range_front=self.RRT.getRangeFrontRight()
             range_side=self.RRT.getRangeRight()
+            
+        bot_pose = PoseStamped();
+        bot_pose.pose.position.x = odometry.pose.position.x;
+        bot_pose.pose.position.y = odometry.pose.position.y;
+        
+        if self.first_run:
+            self.bot_init_position = self.RRT.getPoseBot();
+            pose_tower_abs = self.RRT.getPoseTower();
+            self.pose_tower.pose.position.x = pose_tower_abs.pose.position.x - self.bot_init_position.pose.position.x;
+            self.pose_tower.pose.position.y = pose_tower_abs.pose.position.y - self.bot_init_position.pose.position.y;
+            
+            print(self.bot_init_position.pose.position.x, self.bot_init_position.pose.position.y)
+            print(pose_tower_abs.pose.position.x, pose_tower_abs.pose.position.y)
+            if( abs(pose_tower_abs.pose.position.x)> 0.0):
+                self.first_run = 0
+                 
+ 
+        else:
+            rel_x =  self.pose_tower.pose.position.x-bot_pose.pose.position.x  ;
+            rel_y =   self.pose_tower.pose.position.y - bot_pose.pose.position.y ; 
+            print(bot_pose.pose.position.x,bot_pose.pose.position.y)
+            print(self.pose_tower.pose.position.x,self.pose_tower.pose.position.y)
+            theta = -1*self.RRT.getHeading();
 
-         
+            rel_loc_x = rel_x*numpy.math.cos(theta)-rel_y*numpy.math.sin(theta)
+            rel_loc_y = rel_x*numpy.math.sin(theta)+rel_y*numpy.math.cos(theta)
+            print(rel_loc_x,rel_loc_y)
+
+            self.current_UWB_bearing =  numpy.arctan2(rel_loc_y,rel_loc_x)
+
+            #self.current_UWB_bearing = self.RRT.getUWBBearing();
+            
+
         # Handle State transition
         if self.state == "FORWARD": 
             print self.RRT.getRealDistanceToWall()
@@ -73,20 +109,19 @@ class ComBugController:
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING":
             #bot_pose = self.RRT.getPoseBot();
-            bot_pose = PoseStamped();
-            bot_pose.pose.position.x = odometry.pose.position.x;
-            bot_pose.pose.position.y = odometry.pose.position.y;  
+
 
                        #If wall is lost by corner, rotate to goal again
             if range_front>=2.0 and \
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,0.05)!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,0.05)!=True)): 
                 self.transition("ROTATE_TO_GOAL")
-                self.last_bearing = self.RRT.getUWBBearing()
+                self.last_bearing = deepcopy(self.current_UWB_bearing)
 
                 self.WF.init()
         elif self.state=="ROTATE_TO_GOAL":
-            if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.05) :
+
+            if self.logicIsCloseTo(0,self.current_UWB_bearing,0.05)  :
                 self.first_rotate = False
                 self.transition("FORWARD")
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1:

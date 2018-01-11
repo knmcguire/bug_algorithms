@@ -20,6 +20,8 @@ from argos_bridge.srv import GetCmdsResponse
 from argos_bridge.srv import SwitchBug
 from std_msgs.msg import String
 from std_msgs.msg import Bool
+from std_msgs.msg import Float64
+
 from std_srvs.srv import Empty
 
 import com_bug_controller
@@ -45,6 +47,7 @@ class BugAlgorithms:
     random_environment = False;
     odometry=[0,0];
     twist = Twist()
+    noise_level = 0.0;
 
 
     def getController(self,argument):
@@ -69,6 +72,7 @@ class BugAlgorithms:
         rospy.Subscriber('/bot1/position', PoseStamped, self.RRT.pose_callback_tower,queue_size=10)
         rospy.Subscriber('/switch_bug', String, self.switchBug,queue_size=10)
         rospy.Subscriber('/random_environment', Bool, self.random_environment,queue_size=10)
+        rospy.Subscriber('/noise_level', Float64, self.noise_level_cb,queue_size=10)
 
         rospy.wait_for_service('/start_sim')
 
@@ -83,7 +87,6 @@ class BugAlgorithms:
             
         #full_param_name = rospy.search_param('bug_type')
         bug_type = rospy.get_param('/bot0/bug_algorithms/bug_type')
-        
         
         self.bug_controller = self.getController(bug_type);
         if self.bug_controller == False:
@@ -140,9 +143,9 @@ class BugAlgorithms:
             self.reset_bug = False
             self.odometry = PoseStamped()
 
-           
+        print self.noise_level
         if (self.RRT.getUWBRange()>100):
-            self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0))
+            self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level))
             return GetCmdsResponse(self.twist)
         else: 
             print "bug has reached goal"
@@ -157,13 +160,15 @@ class BugAlgorithms:
             noisy_velocity_estimate = self.twist.linear.x*0.035
         else:
             noisy_velocity_estimate = numpy.random.normal(self.twist.linear.x*0.035,noise,1);
-
         self.odometry.pose.position.x = self.odometry.pose.position.x + noisy_velocity_estimate*math.cos(self.RRT.getHeading())
         self.odometry.pose.position.y = self.odometry.pose.position.y + noisy_velocity_estimate*math.sin(self.RRT.getHeading())
         return self.odometry
         
     def random_environment(self,req):
         self.random_environment = req.data;
+        
+    def noise_level_cb(self,req):
+        self.noise_level = req.data;
 
     
 if __name__ == '__main__':

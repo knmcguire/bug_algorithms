@@ -1,7 +1,7 @@
 clear all, clc
 
 
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-05-2018_16-16.mat
+load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-06-2018_19-24.mat
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
 
@@ -15,20 +15,21 @@ lenght_trajectory = zeros(length(results.environment)-1,length(bug_names));
 lenght_trajectory_percentage = zeros(length(results.environment)-1,length(bug_names));
 
 optimal_path_length_per_environment=0;
-
+se = offsetstrel('ball',3,3);
 for it = 1:length(results.environment)-1
     
     it
-    
-    
+    img_dilated = results.environment(it).img;%imdilate(results.environment(it).img,se);
+
     did_all_bugs_make_it = 1;
     %   optimal_path_per_environment = astar_on_environment(results.environment(1).img,[9,9],[1,1]);
-    if(isfield(results.environment(it),'init_position'))
-        optimal_path_per_environment = astar_on_environment(results.environment(it).img,results.environment(it).init_position(2,:)+7,results.environment(it).init_position(1,:)+7);
-    else
-        optimal_path_per_environment = astar_on_environment(results.environment(it).img,[1 1],[9 9]);
+%     if(isfield(results.environment(it),'init_position'))
+%         
+%         optimal_path_per_environment = astar_on_environment(results.environment(it).img,results.environment(it).init_position(2,:)+7,results.environment(it).init_position(1,:)+7);
+%     else
+        optimal_path_per_environment = astar_on_environment(img_dilated,[1 1],[9 9]);
         
-    end
+%     end
     diff_trajectory = diff(optimal_path_per_environment);
     
     
@@ -43,7 +44,7 @@ for it = 1:length(results.environment)-1
             
             if(~isempty(index))
                 fitness(it,itk) = results.environment(it).bug(index).fitness(1);
-                indices_time = find(results.environment(it).bug(index).distances<1.2);
+                indices_time = find(results.environment(it).bug(index).distances<1.5);
                 
                 
                 %check of bugs toch bijna de goal hadden gehaald en
@@ -53,7 +54,7 @@ for it = 1:length(results.environment)-1
                     results.environment(it).bug(index).trajectory(indices_time(1):end,:)=[];
                 end
                 [value_distance, min_index] = min(results.environment(it).bug(index).distances);
-                
+                %min_index = length(results.environment(it).bug(index).distances);
 
                 
                 diff_trajectory = diff(results.environment(it).bug(index).trajectory);
@@ -91,6 +92,7 @@ for it = 1:length(results.environment)-1
         end
         
     else
+        disp("A* produced an error")
         time(it,:) = NaN;
         lenght_trajectory(it,:) = NaN;
         lenght_trajectory_percentage(it,:) = NaN;
@@ -116,7 +118,7 @@ ylabel('bugs made to goal [%]')
 env_number = 1;
     figure,
 
-% for env_number = 1:359
+ for env_number = 1:359
     env_number
     for it = 1:length(results.environment(env_number).bug)
         subplot(2,3,it),imshow(imresize(results.environment(env_number).img',2))
@@ -133,4 +135,4 @@ env_number = 1;
         title([results.environment(env_number).bug(it).bug_name, ' (' num2str(size(results.environment(env_number).bug(it).trajectory,1)/10) ' sec)'],'Interpreter', 'none')
     end
     keyboard
-% end
+ end

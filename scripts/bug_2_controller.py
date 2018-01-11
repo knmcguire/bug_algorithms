@@ -45,16 +45,17 @@ class Bug2Controller:
         self.direction = self.WF.getDirectionTurn();
         self.hitpoint = PoseStamped();
         self.bot_init_position = PoseStamped()
-        self.pose_tower = PoseStamped()
         self.first_rotate = True;
         self.last_bearing = 0;
         self.stateStartTime = 0;
         self.obstacle_is_hit = 0;
-        self.first_run = 1;
         self.state =  "ROTATE_TO_GOAL"
         self.bot_tower_slope = 0
         self.previous_leave_point =1000.0;
-
+        self.pose_tower = PoseStamped();
+        self.first_run = 1
+        self.current_UWB_bearing = 2000
+        self.current_UWB_range =  1000
         
     def stateMachine(self,RRT,odometry):   
         
@@ -70,18 +71,34 @@ class Bug2Controller:
             range_side=self.RRT.getRangeRight()    
     
         bot_tower_slope_run = 0;
+        
+        bot_pose = PoseStamped();
+        bot_pose.pose.position.x = odometry.pose.position.x;
+        bot_pose.pose.position.y = odometry.pose.position.y;
+        
         if self.first_run:
-            self.pose_tower= self.RRT.getPoseTower();
             self.bot_init_position = self.RRT.getPoseBot();
+            pose_tower_abs = self.RRT.getPoseTower();
+            self.pose_tower.pose.position.x = pose_tower_abs.pose.position.x - self.bot_init_position.pose.position.x;
+            self.pose_tower.pose.position.y = pose_tower_abs.pose.position.y - self.bot_init_position.pose.position.y;
             if math.fabs(self.pose_tower.pose.position.x -self.bot_init_position.pose.position.x)>0:
                 self.bot_tower_slope = (self.pose_tower.pose.position.y -self.bot_init_position.pose.position.y)/(self.pose_tower.pose.position.x -self.bot_init_position.pose.position.x);
                 self.first_run = 0
         else:
-            bot_pose = self.RRT.getPoseBot();
-            self.pose_tower= self.RRT.getPoseTower();
+            #bot_pose = self.RRT.getPoseBot();
+            #self.pose_tower= self.RRT.getPoseTower();
+
+
             bot_tower_slope_run = (self.pose_tower.pose.position.y -bot_pose.pose.position.y)/(self.pose_tower.pose.position.x -bot_pose.pose.position.x);
-            bot_tower_y_diff = self.pose_tower.pose.position.y -bot_pose.pose.position.y
-            bot_tower_x_diff = self.pose_tower.pose.position.x -bot_pose.pose.position.x
+            rel_x =  self.pose_tower.pose.position.x-bot_pose.pose.position.x  ;
+            rel_y =   self.pose_tower.pose.position.y - bot_pose.pose.position.y ; 
+            theta = -1*self.RRT.getHeading();
+
+            rel_loc_x = rel_x*numpy.math.cos(theta)-rel_y*numpy.math.sin(theta)
+            rel_loc_y = rel_x*numpy.math.sin(theta)+rel_y*numpy.math.cos(theta)
+            self.current_UWB_bearing =  numpy.arctan2(rel_loc_y,rel_loc_x)
+            self.current_UWB_range = math.sqrt(rel_loc_x**2 +rel_loc_y**2)
+            
         
         
         # Handle State transition
@@ -90,20 +107,20 @@ class Bug2Controller:
                # self.hitpoint = self.RRT.getPoseBot();
                 self.hitpoint.pose.position.x = odometry.pose.position.x;
                 self.hitpoint.pose.position.y = odometry.pose.position.y;
-                self.previous_hit_point = self.RRT.getUWBRange();
+                self.previous_hit_point = self.current_UWB_range;
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING": 
             bot_pose.pose.position.x = odometry.pose.position.x;
             bot_pose.pose.position.y = odometry.pose.position.y;  
             if self.logicIsCloseTo(self.bot_tower_slope, bot_tower_slope_run,0.1) and\
-            bot_tower_x_diff>0 and  self.RRT.getUWBRange()<self.previous_hit_point and\
+            rel_x>0 and  self.current_UWB_range<self.previous_hit_point and\
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision())!=True)): 
                 self.transition("ROTATE_TO_GOAL")
-                self.last_bearing = self.RRT.getUWBBearing()
+                self.last_bearing = self.current_UWB_bearing
                 self.WF.init()
         elif self.state=="ROTATE_TO_GOAL":
-            if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.05) :
+            if self.logicIsCloseTo(0,self.current_UWB_bearing,0.05) :
                 self.transition("FORWARD")
 
                 

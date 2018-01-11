@@ -53,12 +53,15 @@ class Alg2Controller:
         self.hit_points = []
         self.last_bearing = 0;
         self.stateStartTime = 0;
-        self.first_run = 0;
         self.first_rotate = True;
         self.heading_before_turning = 0;
         self.state =  "ROTATE_TO_GOAL"
         self.previous_hit_point =1000.0;
-
+        self.pose_tower = PoseStamped();
+        self.first_run = 1
+        self.current_UWB_bearing = 2000
+        self.current_UWB_range =  1000
+        
     # Ros loop were the rate of the controller is handled
     def rosLoop(self):
         rate = rospy.Rate(30)
@@ -81,14 +84,37 @@ class Alg2Controller:
             range_front=self.RRT.getRangeFrontRight()
             range_side=self.RRT.getRangeRight()
 
-         
+                          # Rotation to goal based on odometery    
+        bot_pose = PoseStamped();
+        bot_pose.pose.position.x = odometry.pose.position.x;
+        bot_pose.pose.position.y = odometry.pose.position.y;
+        
+        if self.first_run:
+            self.bot_init_position = self.RRT.getPoseBot();
+            pose_tower_abs = self.RRT.getPoseTower();
+            self.pose_tower.pose.position.x = pose_tower_abs.pose.position.x - self.bot_init_position.pose.position.x;
+            self.pose_tower.pose.position.y = pose_tower_abs.pose.position.y - self.bot_init_position.pose.position.y;
+
+            if( abs(pose_tower_abs.pose.position.x)> 0.0):
+                self.first_run = 0
+        else:
+            rel_x =  self.pose_tower.pose.position.x-bot_pose.pose.position.x  ;
+            rel_y =   self.pose_tower.pose.position.y - bot_pose.pose.position.y ; 
+            theta = -1*self.RRT.getHeading();
+
+            rel_loc_x = rel_x*numpy.math.cos(theta)-rel_y*numpy.math.sin(theta)
+            rel_loc_y = rel_x*numpy.math.sin(theta)+rel_y*numpy.math.cos(theta)
+            
+            self.current_UWB_bearing =  numpy.arctan2(rel_loc_y,rel_loc_x)
+            self.current_UWB_range = math.sqrt(rel_loc_x**2 +rel_loc_y**2)
+            
         # Handle State transition
         if self.state == "FORWARD": 
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1: #If an obstacle comes within the distance of the wall
                 #self.hitpoint = self.RRT.getPoseBot();
                 self.hitpoint.pose.position.x = odometry.pose.position.x;
                 self.hitpoint.pose.position.y = odometry.pose.position.y;
-                self.previous_hit_point = self.RRT.getUWBRange()
+                self.previous_hit_point = self.current_UWB_range;
                 if self.checkHitPoints(self.hitpoint):
                     print "already hit point!"
                     self.rotated_half_once = True
@@ -97,9 +123,6 @@ class Alg2Controller:
                     print "Did not hit point"
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING":
-            bot_pose = PoseStamped();
-            bot_pose.pose.position.x = odometry.pose.position.x;
-            bot_pose.pose.position.y = odometry.pose.position.y;            #If wall is lost by corner, rotate to goal again
             if self.checkHitPoints(bot_pose) and self.rotated_half_once == False and \
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision())!=True)):
@@ -107,16 +130,16 @@ class Alg2Controller:
                 self.WF.init()
                 self.direction = -1*self.direction
                 self.heading_before_turning = self.RRT.getHeading() 
-            if range_front>=2.0 and  self.RRT.getUWBRange()<self.previous_hit_point and\
+            if range_front>=2.0 and  self.current_UWB_range<self.previous_hit_point and\
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,0.05)!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,0.05)!=True)): 
                 self.transition("ROTATE_TO_GOAL")
-                self.last_bearing = self.RRT.getUWBBearing()
+                self.last_bearing = self.current_UWB_bearing
                 self.WF.init()
                 self.hit_points.append(deepcopy(self.hitpoint))
                 print "saved hitpoint"
         elif self.state=="ROTATE_TO_GOAL":
-            if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.05) :
+            if self.logicIsCloseTo(0,self.current_UWB_bearing,0.05) :
                 self.first_rotate = False
                 self.rotated_half_once = False
                 self.direction = self.init_direction
