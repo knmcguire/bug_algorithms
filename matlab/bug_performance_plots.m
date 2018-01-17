@@ -1,7 +1,7 @@
 clear all, clc
 
 
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-06-2018_19-24.mat
+load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-04-2018_19-50.mat
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
 

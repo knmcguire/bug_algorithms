@@ -156,7 +156,7 @@ class BugAlgorithms:
 
     
     def get_odometry_from_commands(self,noise):
-        if noise == 0:
+        if noise < 0.01:
             noisy_velocity_estimate = self.twist.linear.x*0.035
         else:
             noisy_velocity_estimate = numpy.random.normal(self.twist.linear.x*0.035,noise,1);

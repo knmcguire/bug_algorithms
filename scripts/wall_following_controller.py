@@ -37,7 +37,7 @@ class WallFollowController:
     def __init__(self):
         self.distance_to_wall=self.WF.getWantedDistanceToWall();
         self.direction = self.WF.getDirectionTurn();
-        self.state =  "FORWARD"
+        self.state =  "ROTATE_TO_GOAL"
 
         
         
@@ -68,6 +68,10 @@ class WallFollowController:
         if self.state == "FORWARD":
             if self.RRT.getLowestValue()<self.distance_to_wall+0.1 and self.RRT.getLowestValue() != 0.0:
                 self.transition("WALL_FOLLOWING")
+        elif self.state=="ROTATE_TO_GOAL":
+            if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.05)  :
+                self.first_rotate = False
+                self.transition("FORWARD")
                 
         # Handle actions   
         if self.state == "FORWARD":
@@ -75,6 +79,9 @@ class WallFollowController:
         elif self.state == "WALL_FOLLOWING":
             twist = self.WF.wallFollowingController(range_side,range_front,
                                                     self.RRT.getLowestValue(),self.RRT.getHeading(),self.RRT.getArgosTime(),self.direction)     
+        elif self.state=="ROTATE_TO_GOAL":
+            twist = self.WF.twistTurnInCorner(self.direction)
+
         print self.state
                 
         self.lastTwist = twist
@@ -85,3 +92,11 @@ class WallFollowController:
         self.state = newState
         self.stateStartTime = self.RRT.getArgosTime()
 
+    # See if a value is within a margin from the wanted value
+    def logicIsCloseTo(self, real_value = 0.0, checked_value =0.0, margin=0.05):
+        
+        if real_value> checked_value-margin and real_value< checked_value+margin:
+            return True 
+        else:
+            return False
+        
