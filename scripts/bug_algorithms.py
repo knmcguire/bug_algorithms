@@ -31,6 +31,7 @@ import alg_1_controller
 import alg_2_controller
 import wall_following_controller
 import blind_bug_controller
+import gradient_bug_controller
 
 from geometry_msgs.msg import Twist
 from scipy.stats._continuous_distns import beta
@@ -59,6 +60,8 @@ class BugAlgorithms:
             "alg_2": alg_2_controller.Alg2Controller(),
             "wf": wall_following_controller.WallFollowController(),
             "blind_bug": blind_bug_controller.BlindBugController(),
+            "gradient_bug": gradient_bug_controller.GradientBugController(),
+
         }
         
         return switcher.get(argument, False)
