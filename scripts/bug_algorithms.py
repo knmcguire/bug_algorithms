@@ -84,7 +84,7 @@ class BugAlgorithms:
 
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
-            start_sim(1,1)
+            start_sim(1,1,1)
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
             
@@ -115,11 +115,11 @@ class BugAlgorithms:
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
             if(self.random_environment):
-                start_sim(1,1)
+                start_sim(1,1,1)
                 self.random_environment = False
                 print "python, send regenerate environment"
             else:
-                start_sim(2,1)
+                start_sim(2,1,1)
                 print "python, reset experiment with same environment"
 
 
