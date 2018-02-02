@@ -172,9 +172,9 @@ ylabel('bugs made to goal [%]')
 env_number = 1;
 figure,
 bug_number = 5
-voorbeelden = 123%[32 56 105 122 123 140] 
+voorbeelden = 123%[32 56 105 122 123 140 188] 
 noise = [0.05,0.1,0.15,0.2];
-for env_number = voorbeelden%1:169
+for env_number = 188
     env_number
     for it = 1:length(results.environment(env_number).noise)
         subplot(2,2,it),imshow(imresize(results.environment(env_number).img',2))
