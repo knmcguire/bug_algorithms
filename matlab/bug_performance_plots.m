@@ -115,24 +115,24 @@ ylabel('bugs made to goal [%]')
 %set(gca,'xticklabel',bug_names)
 
 %%
-env_number = 1;
-    figure,
-
- for env_number = 1:359
-    env_number
-    for it = 1:length(results.environment(env_number).bug)
-        subplot(2,3,it),imshow(imresize(results.environment(env_number).img',2))
-        hold on
-        if(isfield(results.environment(env_number),'init_position'))
-            plot(20*(results.environment(env_number).init_position(:,2)+7),20*(results.environment(env_number).init_position(:,1)-1+7), 'o')
-        else
-            plot(20*[1 9],20*[1 9], 'o')
-        end
-        
-        
-        hold on, plot(20*(results.environment(env_number).bug(it).trajectory(2:end,2)+7),20*(results.environment(env_number).bug(it).trajectory(2:end,1)+7),'r')
-        
-        title([results.environment(env_number).bug(it).bug_name, ' (' num2str(size(results.environment(env_number).bug(it).trajectory,1)/10) ' sec)'],'Interpreter', 'none')
-    end
-    keyboard
- end
+% env_number = 1;
+%     figure,
+% 
+%  for env_number = 1:359
+%     env_number
+%     for it = 1:length(results.environment(env_number).bug)
+%         subplot(2,3,it),imshow(imresize(results.environment(env_number).img',2))
+%         hold on
+%         if(isfield(results.environment(env_number),'init_position'))
+%             plot(20*(results.environment(env_number).init_position(:,2)+7),20*(results.environment(env_number).init_position(:,1)-1+7), 'o')
+%         else
+%             plot(20*[1 9],20*[1 9], 'o')
+%         end
+%         
+%         
+%         hold on, plot(20*(results.environment(env_number).bug(it).trajectory(2:end,2)+7),20*(results.environment(env_number).bug(it).trajectory(2:end,1)+7),'r')
+%         
+%         title([results.environment(env_number).bug(it).bug_name, ' (' num2str(size(results.environment(env_number).bug(it).trajectory,1)/10) ' sec)'],'Interpreter', 'none')
+%     end
+%     keyboard
+%  end

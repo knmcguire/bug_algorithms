@@ -19,6 +19,7 @@ clear results
 %results1.environment=rmfield(results1.environment,'init_position');
 results.environment = [results1.environment, results2.environment, results3.environment, results4.environment, results5.environment];
 
+clear results1 results2 results3 results4 results5
 %load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-15-2018_17-19.mat
 
 
@@ -31,10 +32,13 @@ lenght_trajectory_percentage = zeros(4,length(results.environment)-1,length(bug_
 
 optimal_path_length_per_environment=0;
 se = offsetstrel('ball',3,3);
-for it = 1:length(results.environment)-1
+for it = 1:length(results.environment)
+    
     
     it
     img_dilated = results.environment(it).img;%imdilate(results.environment(it).img,se);
+    
+    imwrite(img_dilated,['img_used_in_litsurvey/rand_env_lit_',num2str(it)],'PNG')
     
     did_all_bugs_make_it = 1;
     
@@ -195,6 +199,7 @@ for env_number = 188
 
         end
         if reached_goal(env_number,bug_number,it) && it == 4
+
             keyboard
         end
     end
