@@ -7,6 +7,8 @@ import rospy
 import math, random
 import numpy
 import time
+import random
+
 from argos_bridge.msg import Puck
 from argos_bridge.msg import PuckList
 from argos_bridge.msg import Proximity
@@ -70,7 +72,7 @@ class Alg2Controller:
             rate.sleep()
 
     
-    def stateMachine(self,RRT,odometry):   
+    def stateMachine(self,RRT,odometry,falsepositive_ratio,falsenegative_ratio):      
         self.RRT = RRT   
         
         range_front = 1000.0
@@ -123,7 +125,9 @@ class Alg2Controller:
                     print "Did not hit point"
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING":
-            if self.checkHitPoints(bot_pose) and self.rotated_half_once == False and \
+            rand_FN = random.random()
+            rand_FP = random.random()
+            if ((self.checkHitPoints(bot_pose) and rand_FN>falsenegative_ratio) or rand_FP<falsepositive_ratio) and self.rotated_half_once == False and \
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision())!=True)):
                 self.transition("ROTATE_180")

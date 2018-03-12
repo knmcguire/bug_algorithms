@@ -50,7 +50,7 @@ class BugAlgorithms:
     odometry=[0,0];
     twist = Twist()
     noise_level = 0.0;
-
+    bug_type = "com_bug"
 
     def getController(self,argument):
         switcher = {
@@ -91,9 +91,9 @@ class BugAlgorithms:
             print "Service call failed: %s"%e
             
         #full_param_name = rospy.search_param('bug_type')
-        bug_type = rospy.get_param('/bot0/bug_algorithms/bug_type')
+        self.bug_type = rospy.get_param('/bot0/bug_algorithms/bug_type')
         
-        self.bug_controller = self.getController(bug_type);
+        self.bug_controller = self.getController(self.bug_type);
         if self.bug_controller == False:
             print "Wrong bug type!"
 
@@ -148,9 +148,11 @@ class BugAlgorithms:
             self.reset_bug = False
             self.odometry = PoseStamped()
 
-        print self.noise_level
         if (self.RRT.getUWBRange()>100):
-            self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level))
+            if self.bug_type == 'alg_1' or self.bug_type == 'alg_2' :
+                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
+            else:
+                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level))
             return GetCmdsResponse(self.twist)
         else: 
             print "bug has reached goal"
