@@ -72,6 +72,7 @@ class Alg1Controller:
         self.first_run = 1
         self.current_UWB_bearing = 2000
         self.current_UWB_range =  1000
+        self.rand_FN = 0;
 
     
     def stateMachine(self,RRT,odometry,falsepositive_ratio,falsenegative_ratio):   
@@ -123,13 +124,16 @@ class Alg1Controller:
                 #self.hitpoint = self.RRT.getPoseBot();
                 self.hitpoint.pose.position.x = odometry.pose.position.x;
                 self.hitpoint.pose.position.y = odometry.pose.position.y;
-                self.previous_hit_point = self.current_UWB_range              
-                if self.checkHitPoints(self.hitpoint):
+                self.previous_hit_point = self.current_UWB_range   
+                rand_FP = random.random()
+                self.rand_FN = random.random()
+                if ((self.checkHitPoints(self.hitpoint) and self.rand_FN>falsenegative_ratio) or rand_FP<falsepositive_ratio) :
                     print "already hit point!"
                     self.rotated_half_once = True
                     self.direction = -1*self.direction
                 else:
                     print "Did not hit point"
+                self.rand_FN = random.random()
                 self.transition("WALL_FOLLOWING")
         elif self.state == "WALL_FOLLOWING": 
             bot_pose = PoseStamped();
@@ -145,9 +149,8 @@ class Alg1Controller:
                 self.hit_points.append(deepcopy(self.hitpoint))
                 print "saved hitpoint"
             print("already rotated", self.rotated_half_once)
-            rand_FN = random.random()
             rand_FP = random.random()
-            if ((self.checkHitPoints(bot_pose) and rand_FN>falsenegative_ratio) or rand_FP<falsepositive_ratio) and self.rotated_half_once == False and \
+            if ((self.checkHitPoints(bot_pose) and self.rand_FN>falsenegative_ratio) or rand_FP<falsepositive_ratio) and self.rotated_half_once == False and \
             ((self.logicIsCloseTo(self.hitpoint.pose.position.x, bot_pose.pose.position.x,self.WF.getLocationPrecision())!=True ) or \
             (self.logicIsCloseTo(self.hitpoint.pose.position.y, bot_pose.pose.position.y,self.WF.getLocationPrecision())!=True)):
                 self.transition("ROTATE_180")

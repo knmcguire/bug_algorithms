@@ -1,11 +1,6 @@
 clear all, clc
+load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-16-2018_04-17.mat
 
-
-%load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_02-27-2018_01-16.mat
-% 
-% load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-01-2018_16-05.mat
-
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-29-2018_05-38.mat
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
 
@@ -16,13 +11,13 @@ lenght_trajectory_percentage = zeros(4,length(results.environment)-1,length(bug_
 
 optimal_path_length_per_environment=0;
 se = offsetstrel('ball',3,3);
-for it = 1:length(results.environment)-1
+for it = 1:length(results.environment)
     
     
     it
     img_dilated = results.environment(it).img;%imdilate(results.environment(it).img,se);
     
-    %imwrite(img_dilated,['img_used_in_litsurvey/rand_env_lit_',num2str(it)],'PNG')
+  %  imwrite(img_dilated,['img_used_in_litsurvey/rand_env_lit_',num2str(it)],'PNG')
     
     did_all_bugs_make_it = 1;
     
@@ -59,7 +54,7 @@ for it = 1:length(results.environment)-1
                     end
                     [value_distance, min_index] = min(results.environment(it).noise(itn).bug(index).distances);
                     min_index = min(3000,length(results.environment(it).noise(itn).bug(index).distances));%length(results.environment(it).noise(itn).bug(index).distances);
-                    value_distance = 0;
+                    
                     
                     diff_trajectory = diff(results.environment(it).noise(itn).bug(index).trajectory);
                     
@@ -100,29 +95,30 @@ end
 % figure,boxplot(lenght_trajectory_percentage(:,1:end-1), 'Labels',bug_names(1:end-1))
 
 
+cmap = colorgrad(4,'blue_down');
 
 figure,
-aboxplot(lenght_trajectory_percentage(:,:,4:5))
-set(gca,'xticklabel',bug_names(4:5))
+aboxplot(lenght_trajectory_percentage(1,:,1:end-1),'Colorgrad', 'blue_up')
+set(gca,'xticklabel',bug_names(1:end-1))
 ylabel('Trajectory bug / Trajectory A*')
+% plot(mean(squeeze(lenght_trajectory_percentage(1,:,2:end-1))), 'o')
 
-legend('p = 0.0','p=0.0005','p=0.001','p=0.0015','p=0.002','p=0.0025')
+%legend('\sigma = 0.05','\sigma =0.1','\sigma =0.15','\sigma =0.25')
 
 figure,
-for itn = 1:6
+for itn = 1
     for itk = 1:6
         reached_goal_bar(itk,itn) = 100*sum(reached_goal(:,itk,itn))/length(results.environment);
     end
 end
-bar_handle = bar(reached_goal_bar(4:5,:),'grouped');
-cmap = colorgrad(6,'blue_down');
+bar_handle = bar(reached_goal_bar(1:6,1),'grouped');
 
-for i = 1:6
+for i = 1
     set(bar_handle(i),'FaceColor',cmap(i,:))
 end
 
 hold on
-set(gca, 'XTickLabel',bug_names(4:5),'DefaultTextInterpreter', 'none')
+set(gca, 'XTickLabel',bug_names(1:end-1),'DefaultTextInterpreter', 'none')
 ylabel('bugs made to goal [%]')
 
 
@@ -160,12 +156,11 @@ ylabel('bugs made to goal [%]')
 env_number = 1;
 figure,
 bug_number = 5
-
-voorbeelden_FP = [50] ;%[4 5 10 12 15 24 29 36 37 43 45 50 68 72 73 75 78 85 91 98 99 100] 
-noise = [0 0.0005,0.001,0.0015,0.0020,0.0025];
-for env_number = 1:100
+voorbeelden = 25;%[18 25 68 76 6]
+noise = [0.05,0.1,0.15,0.2];
+for env_number = voorbeelden
     env_number
-    for it = 1:length(results.environment(env_number).noise)
+    for it = 1:length(results.environment(env_number).noise(1).bug)
         subplot(2,3,it),imshow(imresize(results.environment(env_number).img',2))
         hold on
         if(isfield(results.environment(env_number),'init_position'))
@@ -174,13 +169,12 @@ for env_number = 1:100
             plot(20*[1.5 11],20*[1.5 11], 'o')
         end
         
-        hold on, plot(20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,2)+7),'r')
+        hold on, plot(20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,2)+7),'r')
         
-        title(['p=',num2str(noise(it)), ' (',...
-            num2str(size(results.environment(env_number).noise(it).bug(bug_number).trajectory,1)/10), ' sec)'],'Interpreter', 'none','FontSize',9)
+        title([results.environment(env_number).noise(1).bug(it).bug_name,' ', num2str(noise(1)), ' (',...
+            num2str(size(results.environment(env_number).noise(1).bug(it).trajectory,1)/10), ' sec)'],'Interpreter', 'none')
 
 
     end
-                keyboard
-
+keyboard    
 end

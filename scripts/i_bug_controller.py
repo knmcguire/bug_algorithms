@@ -59,7 +59,7 @@ class IBugController:
         self.current_UWB_bearing = 2000
         self.current_UWB_range =  1000
         
-    def stateMachine(self,RRT,odometry):   
+    def stateMachine(self,RRT,odometry,range_noise):   
         self.RRT = RRT    
         
         
@@ -96,7 +96,7 @@ class IBugController:
             
             self.current_UWB_bearing =  numpy.arctan2(rel_loc_y,rel_loc_x)
             self.current_UWB_range = math.sqrt(rel_loc_x**2 +rel_loc_y**2)
-            
+            self.current_UWB_range = numpy.random.normal(self.current_UWB_range,range_noise,1)
             
         # Handle State transition
         if self.state == "FORWARD": 

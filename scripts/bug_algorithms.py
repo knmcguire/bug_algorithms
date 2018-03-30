@@ -50,7 +50,6 @@ class BugAlgorithms:
     odometry=[0,0];
     twist = Twist()
     noise_level = 0.0;
-    bug_type = "com_bug"
 
     def getController(self,argument):
         switcher = {
@@ -112,6 +111,7 @@ class BugAlgorithms:
 
     def switchBug(self,req):
         self.bug_controller = self.getController(req.data);
+        self.bug_type = req.data
         self.reset_bug = True
         print req.data
         try:
@@ -149,8 +149,12 @@ class BugAlgorithms:
             self.odometry = PoseStamped()
 
         if (self.RRT.getUWBRange()>100):
-            if self.bug_type == 'alg_1' or self.bug_type == 'alg_2' :
+            if self.bug_type == 'alg_1':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
+            elif self.bug_type == 'alg_2' :
+                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level,0.0)
+            elif self.bug_type == 'i_bug':
+                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),self.noise_level)
             else:
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level))
             return GetCmdsResponse(self.twist)

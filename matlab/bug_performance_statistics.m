@@ -18,7 +18,10 @@ amount_of_bugs = 6;
 amount_of_environments = 100;
 %noise_levels = [0.05 0.1 0.15, 0.2];
 % noise_levels = [0:0.2:1.0];
-noise_levels = [0.0:0.0005:0.0025];
+%noise_levels = [0.0:1:6.0];
+noise_levels = [0.0:0.2:1.0];
+
+%noise_levels=0.0;
 for itk = 1:amount_of_environments
     disp(itk)
     msg_env.Data = 1;

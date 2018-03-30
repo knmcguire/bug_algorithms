@@ -1,7 +1,7 @@
 clear all, clc
 
 
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-04-2018_19-50.mat
+load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-14-2018_14-59.mat
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
 
@@ -27,7 +27,7 @@ for it = 1:length(results.environment)-1
 %         
 %         optimal_path_per_environment = astar_on_environment(results.environment(it).img,results.environment(it).init_position(2,:)+7,results.environment(it).init_position(1,:)+7);
 %     else
-        optimal_path_per_environment = astar_on_environment(img_dilated,[1 1],[9 9]);
+        optimal_path_per_environment = astar_on_environment(img_dilated,[2 2],[11 11]);
         
 %     end
     diff_trajectory = diff(optimal_path_per_environment);
@@ -37,27 +37,27 @@ for it = 1:length(results.environment)-1
     if ~isempty(diff_trajectory)
         optimal_path_length_per_environment = sum(sqrt(diff_trajectory(:,1).^2+diff_trajectory(:,2).^2))/10;
         
-        for itk = 1:length(results.environment(it).bug)
+        for itk = 1:length(results.environment(it).noise(1).bug)
             
-            bug_temp = results.environment(it).bug;
+            bug_temp = results.environment(it).noise(1).bug;
             index = find(strcmp({bug_temp.bug_name},bug_names{itk}));
             
             if(~isempty(index))
-                fitness(it,itk) = results.environment(it).bug(index).fitness(1);
-                indices_time = find(results.environment(it).bug(index).distances<1.5);
+                fitness(it,itk) = results.environment(it).noise(1).bug(index).fitness(1);
+                indices_time = find(results.environment(it).noise(1).bug(index).distances<1.5);
                 
                 
                 %check of bugs toch bijna de goal hadden gehaald en
                 %corriceer
                 if(~isempty(indices_time))
-                    results.environment(it).bug(index).distances(indices_time(1):end)=[];
-                    results.environment(it).bug(index).trajectory(indices_time(1):end,:)=[];
+                    results.environment(it).noise(1).bug(index).distances(indices_time(1):end)=[];
+                    results.environment(it).noise(1).bug(index).trajectory(indices_time(1):end,:)=[];
                 end
-                [value_distance, min_index] = min(results.environment(it).bug(index).distances);
-                %min_index = length(results.environment(it).bug(index).distances);
+                [value_distance, min_index] = min(results.environment(it).noise(1).bug(index).distances);
+                min_index = length(results.environment(it).noise(1).bug(index).distances);
 
                 
-                diff_trajectory = diff(results.environment(it).bug(index).trajectory);
+                diff_trajectory = diff(results.environment(it).noise(1).bug(index).trajectory);
                 
                 
                 
@@ -81,8 +81,8 @@ for it = 1:length(results.environment)-1
                 %             temp_lenght_trajectory = temp_lenght_trajectory + pdist(results.environment(it).bug(index).trajectory(itm:itm+1,:),'euclidean');
                 %         end
                 
-                mean_gradient_env(itk) = mean(diff(results.environment(it).bug(index).distances));
-                mean_gradient(it,itk) =  mean(diff(results.environment(it).bug(index).distances));
+                mean_gradient_env(itk) = mean(diff(results.environment(it).noise(1).bug(index).distances));
+                mean_gradient(it,itk) =  mean(diff(results.environment(it).noise(1).bug(index).distances));
             end
             
         end
@@ -106,7 +106,7 @@ end
 %figure,boxplot(time, 'Labels',bug_names)
 %figure,boxplot(mean_gradient, 'Labels',bug_names)
 %figure,boxplot(lenght_trajectory, 'Labels',bug_names)
-figure,boxplot(lenght_trajectory_percentage(:,1:end-1), 'Labels',bug_names(1:end-1))
+figure,boxplot(100*lenght_trajectory_percentage(:,1:end-1), 'Labels',bug_names(1:end-1))
 ylabel('Trajectory bug / Trajectory A*')
 figure,bar(sum(reached_goal(:,1:end-1))/360)
 set(gca, 'XTickLabel',bug_names(1:end-1),'DefaultTextInterpreter', 'none')

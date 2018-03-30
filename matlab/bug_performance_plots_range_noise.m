@@ -1,11 +1,11 @@
 clear all, clc
 
 
-%load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_02-27-2018_01-16.mat
-% 
-% load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-01-2018_16-05.mat
 
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-29-2018_05-38.mat
+
+load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-13-2018_06-04.mat
+
+
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
 
@@ -59,10 +59,10 @@ for it = 1:length(results.environment)-1
                     end
                     [value_distance, min_index] = min(results.environment(it).noise(itn).bug(index).distances);
                     min_index = min(3000,length(results.environment(it).noise(itn).bug(index).distances));%length(results.environment(it).noise(itn).bug(index).distances);
-                    value_distance = 0;
                     
                     diff_trajectory = diff(results.environment(it).noise(itn).bug(index).trajectory);
-                    
+                    value_distance = 0
+
                     
                     
                     temp_lenght_trajectory = sum(sqrt(diff_trajectory(1:min_index-1,1).^2+diff_trajectory(1:min_index-1,2).^2))+value_distance;
@@ -85,12 +85,16 @@ for it = 1:length(results.environment)-1
             
         end
         
+        
+        
+        
     else
         disp("A* produced an error")
         time(it,:) = NaN;
         lenght_trajectory(it,:) = NaN;
         lenght_trajectory_percentage(it,:) = NaN;
     end
+
     
     
 end
@@ -102,11 +106,11 @@ end
 
 
 figure,
-aboxplot(lenght_trajectory_percentage(:,:,4:5))
-set(gca,'xticklabel',bug_names(4:5))
+aboxplot(lenght_trajectory_percentage(:,:,5:6))
+set(gca,'xticklabel',bug_names(5:6))
 ylabel('Trajectory bug / Trajectory A*')
 
-legend('p = 0.0','p=0.0005','p=0.001','p=0.0015','p=0.002','p=0.0025')
+legend('\sigma = 0','\sigma=1','\sigma=2','\sigma=3','\sigma=4','\sigma=5')
 
 figure,
 for itn = 1:6
@@ -114,7 +118,7 @@ for itn = 1:6
         reached_goal_bar(itk,itn) = 100*sum(reached_goal(:,itk,itn))/length(results.environment);
     end
 end
-bar_handle = bar(reached_goal_bar(4:5,:),'grouped');
+bar_handle = bar(reached_goal_bar(5:6,:),'grouped');
 cmap = colorgrad(6,'blue_down');
 
 for i = 1:6
@@ -122,7 +126,7 @@ for i = 1:6
 end
 
 hold on
-set(gca, 'XTickLabel',bug_names(4:5),'DefaultTextInterpreter', 'none')
+set(gca, 'XTickLabel',bug_names(5:6),'DefaultTextInterpreter', 'none')
 ylabel('bugs made to goal [%]')
 
 
@@ -159,13 +163,12 @@ ylabel('bugs made to goal [%]')
 %%
 env_number = 1;
 figure,
-bug_number = 5
-
-voorbeelden_FP = [50] ;%[4 5 10 12 15 24 29 36 37 43 45 50 68 72 73 75 78 85 91 98 99 100] 
-noise = [0 0.0005,0.001,0.0015,0.0020,0.0025];
-for env_number = 1:100
+bug_number = 6
+voorbeelden = [1 4 11 26 29 30 35 48 50 52 58  61 62 65 70 73 76 77  78 81 88]
+noise = [0:5];
+for env_number = voorbeelden
     env_number
-    for it = 1:length(results.environment(env_number).noise)
+    for it = 1:6%length(results.environment(env_number).noise)
         subplot(2,3,it),imshow(imresize(results.environment(env_number).img',2))
         hold on
         if(isfield(results.environment(env_number),'init_position'))
@@ -176,11 +179,13 @@ for env_number = 1:100
         
         hold on, plot(20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,2)+7),'r')
         
-        title(['p=',num2str(noise(it)), ' (',...
-            num2str(size(results.environment(env_number).noise(it).bug(bug_number).trajectory,1)/10), ' sec)'],'Interpreter', 'none','FontSize',9)
+        title([results.environment(env_number).noise(it).bug(bug_number).bug_name,' ', num2str(noise(it)), ' (',...
+            num2str(size(results.environment(env_number).noise(it).bug(bug_number).trajectory,1)/10), ' sec)'],'Interpreter', 'none')
 
+        %if reached_goal(env_number,bug_number,it) && it == 6
 
+           % keyboard
+       % end
     end
-                keyboard
-
+    keyboard
 end

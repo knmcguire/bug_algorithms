@@ -20,7 +20,6 @@ clear results
 results.environment = [results1.environment, results2.environment, results3.environment, results4.environment, results5.environment];
 
 clear results1 results2 results3 results4 results5
-%load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-15-2018_17-19.mat
 
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
@@ -38,7 +37,7 @@ for it = 1:length(results.environment)
     it
     img_dilated = results.environment(it).img;%imdilate(results.environment(it).img,se);
     
-    imwrite(img_dilated,['img_used_in_litsurvey/rand_env_lit_',num2str(it)],'PNG')
+  %  imwrite(img_dilated,['img_used_in_litsurvey/rand_env_lit_',num2str(it)],'PNG')
     
     did_all_bugs_make_it = 1;
     
@@ -74,7 +73,7 @@ for it = 1:length(results.environment)
                         results.environment(it).noise(itn).bug(index).trajectory(indices_time(1):end,:)=[];
                     end
                     [value_distance, min_index] = min(results.environment(it).noise(itn).bug(index).distances);
-                    min_index = min(3000,min_index);%length(results.environment(it).noise(itn).bug(index).distances));%length(results.environment(it).noise(itn).bug(index).distances);
+                    min_index = min(3000,length(results.environment(it).noise(itn).bug(index).distances));%length(results.environment(it).noise(itn).bug(index).distances);
                     
                     
                     diff_trajectory = diff(results.environment(it).noise(itn).bug(index).trajectory);
@@ -118,8 +117,8 @@ end
 
 
 figure,
-aboxplot(lenght_trajectory_percentage(:,:,1:end-1))
-set(gca,'xticklabel',bug_names(1:end-1))
+aboxplot(lenght_trajectory_percentage(:,:,2:end-1))
+set(gca,'xticklabel',bug_names(2:end-1))
 ylabel('Trajectory bug / Trajectory A*')
 
 legend('\sigma = 0.05','\sigma =0.1','\sigma =0.15','\sigma =0.25')
@@ -127,10 +126,10 @@ legend('\sigma = 0.05','\sigma =0.1','\sigma =0.15','\sigma =0.25')
 figure,
 for itn = 1:4
     for itk = 1:6
-        reached_goal_bar(itk,itn) = sum(reached_goal(:,itk,itn))/length(results.environment);
+        reached_goal_bar(itk,itn) = 100*sum(reached_goal(:,itk,itn))/length(results.environment);
     end
 end
-bar_handle = bar(reached_goal_bar,'grouped');
+bar_handle = bar(reached_goal_bar(2:6,:),'grouped');
 cmap = colorgrad(4,'blue_down');
 
 for i = 1:4
@@ -138,7 +137,7 @@ for i = 1:4
 end
 
 hold on
-set(gca, 'XTickLabel',bug_names(1:end-1),'DefaultTextInterpreter', 'none')
+set(gca, 'XTickLabel',bug_names(2:end-1),'DefaultTextInterpreter', 'none')
 ylabel('bugs made to goal [%]')
 
 
