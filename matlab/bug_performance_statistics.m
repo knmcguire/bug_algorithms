@@ -15,13 +15,13 @@ msg_env = rosmessage(environment_random_pub);
 msg_noise = rosmessage(noise_level_pub);
 
 amount_of_bugs = 6;
-amount_of_environments = 100;
+amount_of_environments = 1;
 %noise_levels = [0.05 0.1 0.15, 0.2];
 % noise_levels = [0:0.2:1.0];
 %noise_levels = [0.0:1:6.0];
-noise_levels = [0.0:0.2:1.0];
+%noise_levels = [0.0:0.2:1.0];
 
-%noise_levels=0.0;
+noise_levels=0.0;
 for itk = 1:amount_of_environments
     disp(itk)
     msg_env.Data = 1;
@@ -33,7 +33,7 @@ for itk = 1:amount_of_environments
         send(noise_level_pub,msg_noise);
         pause(2)
         
-        for it = 4:5
+        for it = 1:6
             
             msg.Data = bug_names{it};
             send(switch_bug_pub,msg);

@@ -1,6 +1,6 @@
 clear all, clc
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-16-2018_04-17.mat
-
+% load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-16-2018_04-17.mat
+load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-30-2018_21-54.mat
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
 
@@ -156,18 +156,20 @@ ylabel('bugs made to goal [%]')
 env_number = 1;
 figure,
 bug_number = 5
-voorbeelden = 25;%[18 25 68 76 6]
+voorbeelden = 1;%[18 25 68 76 6]
 noise = [0.05,0.1,0.15,0.2];
 for env_number = voorbeelden
     env_number
     for it = 1:length(results.environment(env_number).noise(1).bug)
-        subplot(2,3,it),imshow(imresize(results.environment(env_number).img',2))
+        subplot(2,3,it),%imshow(imresize(imread('g_env.png'),2))
         hold on
-        if(isfield(results.environment(env_number),'init_position'))
-            plot(20*(results.environment(env_number).init_position(:,2)+7),20*(results.environment(env_number).init_position(:,1)-1+7), 'o')
-        else
-            plot(20*[1.5 11],20*[1.5 11], 'o')
-        end
+%         if(isfield(results.environment(env_number),'init_position'))
+%             plot(20*(results.environment(env_number).init_position(:,2)+7),20*(results.environment(env_number).init_position(:,1)-1+7), 'o')
+%         else
+%             plot(20*[1.5 11],20*[1.5 11], 'o')
+%         end
+
+        plot(20*[1.5, 1],20*[6,5],'o')
         
         hold on, plot(20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,2)+7),'r')
         
