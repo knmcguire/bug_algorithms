@@ -70,14 +70,14 @@ class ComBugController:
         bot_pose.pose.position.x = odometry.pose.position.x;
         bot_pose.pose.position.y = odometry.pose.position.y;
         
+        
         if self.first_run:
             self.bot_init_position = self.RRT.getPoseBot();
             pose_tower_abs = self.RRT.getPoseTower();
             self.pose_tower.pose.position.x = pose_tower_abs.pose.position.x - self.bot_init_position.pose.position.x;
             self.pose_tower.pose.position.y = pose_tower_abs.pose.position.y - self.bot_init_position.pose.position.y;
             
-            print(self.bot_init_position.pose.position.x, self.bot_init_position.pose.position.y)
-            print(pose_tower_abs.pose.position.x, pose_tower_abs.pose.position.y)
+            # First topics show it as zero, so wait a bit untill that is not the case
             if( abs(pose_tower_abs.pose.position.x)> 0.0):
                 self.first_run = 0
                  
@@ -85,13 +85,10 @@ class ComBugController:
         else:
             rel_x =  self.pose_tower.pose.position.x-bot_pose.pose.position.x  ;
             rel_y =   self.pose_tower.pose.position.y - bot_pose.pose.position.y ; 
-            print(bot_pose.pose.position.x,bot_pose.pose.position.y)
-            print(self.pose_tower.pose.position.x,self.pose_tower.pose.position.y)
             theta = -1*self.RRT.getHeading();
 
             rel_loc_x = rel_x*numpy.math.cos(theta)-rel_y*numpy.math.sin(theta)
             rel_loc_y = rel_x*numpy.math.sin(theta)+rel_y*numpy.math.cos(theta)
-            print(rel_loc_x,rel_loc_y)
 
             self.current_UWB_bearing =  numpy.arctan2(rel_loc_y,rel_loc_x)
 
@@ -100,7 +97,6 @@ class ComBugController:
 
         # Handle State transition
         if self.state == "FORWARD": 
-            print self.RRT.getRealDistanceToWall()
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1: #If an obstacle comes within the distance of the wall
                # self.hitpoint = self.RRT.getPoseBot();
                 self.hitpoint.pose.position.x = odometry.pose.position.x;

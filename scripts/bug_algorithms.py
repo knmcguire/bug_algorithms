@@ -17,7 +17,6 @@ from geometry_msgs.msg import PoseStamped
 from neat_ros.srv import StartSim
 from argos_bridge.srv import GetCmds
 from argos_bridge.srv import GetCmdsResponse
-from argos_bridge.srv import SwitchBug
 from std_msgs.msg import String
 from std_msgs.msg import Bool
 from std_msgs.msg import Float64
@@ -50,6 +49,8 @@ class BugAlgorithms:
     odometry=[0,0];
     twist = Twist()
     noise_level = 0.0;
+    odometry = PoseStamped()
+
 
     def getController(self,argument):
         switcher = {
