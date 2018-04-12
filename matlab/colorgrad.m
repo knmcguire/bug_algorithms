@@ -46,6 +46,9 @@ switch lower(t)
         c = cat(2,linspace(.8,1,n)',linspace(.2,.6,n)',linspace(.2,.6,n)');
     case 'red_down'
         c = cat(2,linspace(1,.8,n)',linspace(.6,.2,n)',linspace(.6,.2,n)');
+    case 'empty'
+        c = cat(2,linspace(1,1,n)',linspace(1,1,n)',linspace(1,1,n)');
+
     otherwise
         error('No such color gradient.');
 end

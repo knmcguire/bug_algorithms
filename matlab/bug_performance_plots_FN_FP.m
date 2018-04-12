@@ -1,11 +1,11 @@
 clear all, clc
 
 
-%load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_02-27-2018_01-16.mat
+load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_02-27-2018_01-16.mat
 % 
-% load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-01-2018_16-05.mat
+%  load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-01-2018_16-05.mat
 
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-30-2018_17-24.mat
+%load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-30-2018_17-24.mat
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
 
@@ -99,12 +99,14 @@ end
 %figure,boxplot(lenght_trajectory, 'Labels',bug_names)
 % figure,boxplot(lenght_trajectory_percentage(:,1:end-1), 'Labels',bug_names(1:end-1))
 
+bug_names = {'WF', 'Combug', 'Bug2','Alg1', 'Alg2', 'Ibug','blind_bug'};
 
 
 figure,
 aboxplot(lenght_trajectory_percentage(:,:,4:5))
 set(gca,'xticklabel',bug_names(4:5))
 ylabel('Trajectory bug / Trajectory A*')
+ylim([0 10])
 
 legend('p = 0.0','p=0.2','p=0.4','p=0.6','p=0.8','p=1.0')
 
@@ -159,11 +161,11 @@ ylabel('bugs made to goal [%]')
 %%
 env_number = 1;
 figure,
-bug_number = 5
+bug_number = 4
 
 voorbeelden_FP = [50] ;%[4 5 10 12 15 24 29 36 37 43 45 50 68 72 73 75 78 85 91 98 99 100] 
 noise = [0.0:0.2:1.0];
-for env_number = 1:100
+for env_number = 50;%1:100
     env_number
     for it = 1:length(results.environment(env_number).noise)
         subplot(2,3,it),imshow(imresize(results.environment(env_number).img',2))
@@ -174,13 +176,13 @@ for env_number = 1:100
             plot(20*[1.5 11],20*[1.5 11], 'o')
         end
         
-        hold on, plot(20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,2)+7),'r')
+        hold on, plot(20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,2)+7),'g','LineWidth',1)
         
         title(['p=',num2str(noise(it)), ' (',...
             num2str(size(results.environment(env_number).noise(it).bug(bug_number).trajectory,1)/10), ' sec)'],'Interpreter', 'none','FontSize',9)
 
 
     end
-                keyboard
+                
 
 end

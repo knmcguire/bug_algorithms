@@ -103,6 +103,7 @@ end
 %figure,boxplot(lenght_trajectory, 'Labels',bug_names)
 % figure,boxplot(lenght_trajectory_percentage(:,1:end-1), 'Labels',bug_names(1:end-1))
 
+bug_names = {'WF', 'Combug', 'Bug2','Alg1', 'Alg2', 'Ibug','blind_bug'};
 
 
 figure,
@@ -111,6 +112,7 @@ set(gca,'xticklabel',bug_names(5:6))
 ylabel('Trajectory bug / Trajectory A*')
 
 legend('\sigma = 0','\sigma=1','\sigma=2','\sigma=3','\sigma=4','\sigma=5')
+ylim([0 10])
 
 figure,
 for itn = 1:6
@@ -166,7 +168,7 @@ figure,
 bug_number = 6
 voorbeelden = [1 4 11 26 29 30 35 48 50 52 58  61 62 65 70 73 76 77  78 81 88]
 noise = [0:5];
-for env_number = voorbeelden
+for env_number = 88
     env_number
     for it = 1:6%length(results.environment(env_number).noise)
         subplot(2,3,it),imshow(imresize(results.environment(env_number).img',2))
@@ -177,9 +179,9 @@ for env_number = voorbeelden
             plot(20*[1.5 11],20*[1.5 11], 'o')
         end
         
-        hold on, plot(20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,2)+7),'r')
+        hold on, plot(20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,2)+7),'g','LineWidth',1)
         
-        title([results.environment(env_number).noise(it).bug(bug_number).bug_name,' ', num2str(noise(it)), ' (',...
+        title(['Ibug ', num2str(noise(it)), ' (',...
             num2str(size(results.environment(env_number).noise(it).bug(bug_number).trajectory,1)/10), ' sec)'],'Interpreter', 'none')
 
         %if reached_goal(env_number,bug_number,it) && it == 6

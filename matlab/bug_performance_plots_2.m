@@ -1,6 +1,9 @@
 clear all, clc
-% load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-16-2018_04-17.mat
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-30-2018_21-54.mat
+ load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_01-16-2018_04-17.mat %Boxplots
+%G environment
+%/home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-30-2018_21-54.mat
+
+
 
 bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
 
@@ -94,15 +97,21 @@ end
 %figure,boxplot(lenght_trajectory, 'Labels',bug_names)
 % figure,boxplot(lenght_trajectory_percentage(:,1:end-1), 'Labels',bug_names(1:end-1))
 
+bug_names = {'WF', 'Combug', 'Bug2','Alg1', 'Alg2', 'Ibug','blind_bug'};
 
 cmap = colorgrad(4,'blue_down');
 
 figure,
-aboxplot(lenght_trajectory_percentage(1,:,1:end-1),'Colorgrad', 'blue_up')
+aboxplot(lenght_trajectory_percentage(1,:,2:end-1),'Colorgrad', 'blue_up')
 set(gca,'xticklabel',bug_names(1:end-1))
 ylabel('Trajectory bug / Trajectory A*')
-% plot(mean(squeeze(lenght_trajectory_percentage(1,:,2:end-1))), 'o')
+ boxplot(squeeze(lenght_trajectory_percentage(1,:,2:end-1)))
 
+ savetemp = squeeze(lenght_trajectory_percentage(1,:,2:end-1))
+ 
+save('temp.mat', 'savetemp')
+ 
+ 
 %legend('\sigma = 0.05','\sigma =0.1','\sigma =0.15','\sigma =0.25')
 
 figure,
@@ -113,9 +122,14 @@ for itn = 1
 end
 bar_handle = bar(reached_goal_bar(1:6,1),'grouped');
 
-for i = 1
-    set(bar_handle(i),'FaceColor',cmap(i,:))
-end
+savetemp = reached_goal_bar(2:6,1)
+
+save('temp2.mat', 'savetemp')
+
+
+% for i = 1
+%     set(bar_handle(i),'FaceColor',cmap(i,:))
+% end
 
 hold on
 set(gca, 'XTickLabel',bug_names(1:end-1),'DefaultTextInterpreter', 'none')
@@ -171,7 +185,7 @@ for env_number = voorbeelden
 
         plot(20*[1.5, 1],20*[6,5],'o')
         
-        hold on, plot(20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,2)+7),'r')
+        hold on, plot(20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,2)+7),'g','LineWidth',1)
         
         title([results.environment(env_number).noise(1).bug(it).bug_name,' ', num2str(noise(1)), ' (',...
             num2str(size(results.environment(env_number).noise(1).bug(it).trajectory,1)/10), ' sec)'],'Interpreter', 'none')

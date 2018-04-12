@@ -114,25 +114,43 @@ end
 %figure,boxplot(lenght_trajectory, 'Labels',bug_names)
 % figure,boxplot(lenght_trajectory_percentage(:,1:end-1), 'Labels',bug_names(1:end-1))
 
+bug_names = {'WF', 'Combug', 'Bug2','Alg1', 'Alg2', 'Ibug','blind_bug'};
 
-
+tempmat = matfile('temp.mat')
+tempresult = tempmat.savetemp;
 figure,
-aboxplot(lenght_trajectory_percentage(:,:,2:end-1))
+%aboxplot(tempresult, 'colorgrad','empty', 'WidthL',0.2)
+hold on
+temp_lenghth_trajectory = zeros(5,200,5)
+temp_lenghth_trajectory(2:5,:,:)= lenght_trajectory_percentage(:,1:200,2:end-1);
+temp_lenghth_trajectory(1,:,:) = tempresult;
+aboxplot(temp_lenghth_trajectory)
 set(gca,'xticklabel',bug_names(2:end-1))
 ylabel('Trajectory bug / Trajectory A*')
+ylim([0 10])
+legend('\sigma = 0.00','\sigma = 0.05','\sigma =0.1','\sigma =0.15','\sigma =0.25')
+hold on,
 
-legend('\sigma = 0.05','\sigma =0.1','\sigma =0.15','\sigma =0.25')
+
 
 figure,
+
+tempmat = matfile('temp2.mat')
+tempresult = tempmat.savetemp;
 for itn = 1:4
     for itk = 1:6
         reached_goal_bar(itk,itn) = 100*sum(reached_goal(:,itk,itn))/length(results.environment);
     end
 end
-bar_handle = bar(reached_goal_bar(2:6,:),'grouped');
-cmap = colorgrad(4,'blue_down');
 
-for i = 1:4
+reached_goal_bar_temp = zeros(5,5)
+reached_goal_bar_temp(:,1) = tempresult
+reached_goal_bar_temp(:,2:end) = reached_goal_bar(2:6,:)
+
+bar_handle = bar(reached_goal_bar_temp,'grouped');
+cmap = colorgrad(5,'blue_down');
+
+for i = 1:5
     set(bar_handle(i),'FaceColor',cmap(i,:))
 end
 
@@ -177,7 +195,10 @@ figure,
 bug_number = 5
 voorbeelden = 123%[32 56 105 122 123 140 188] 
 noise = [0.05,0.1,0.15,0.2];
-for env_number = 188
+
+bug_names = {'WF', 'Combug', 'Bug2','Alg1', 'Alg2', 'Ibug','blind_bug'};
+
+for env_number = 123
     env_number
     for it = 1:length(results.environment(env_number).noise)
         subplot(2,2,it),imshow(imresize(results.environment(env_number).img',2))
@@ -188,18 +209,14 @@ for env_number = 188
             plot(20*[1.5 11],20*[1.5 11], 'o')
         end
         
-        hold on, plot(20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,2)+7),'r')
+        hold on, plot(20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,1)+7),20*(results.environment(env_number).noise(it).bug(bug_number).trajectory(2:end,2)+7),'g','LineWidth',1)
         
-        if(size(results.environment(env_number).noise(it).bug(bug_number).trajectory,1)<3001)  
-        title([results.environment(env_number).noise(it).bug(bug_number).bug_name,' ', num2str(noise(it)), ' (',...
+        title(['Alg2 ', num2str(noise(it)), ' (',...
             num2str(size(results.environment(env_number).noise(it).bug(bug_number).trajectory,1)/10), ' sec)'],'Interpreter', 'none')
-        else
-           title([results.environment(env_number).noise(it).bug(bug_number).bug_name,' ',  num2str(noise(it)), ' (inf sec)'],'Interpreter', 'none')
 
-        end
         if reached_goal(env_number,bug_number,it) && it == 4
 
-            keyboard
+            
         end
     end
     

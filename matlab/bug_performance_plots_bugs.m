@@ -158,6 +158,9 @@ figure,
 bug_number = 5
 voorbeelden = 1;%[18 25 68 76 6]
 noise = [0.05,0.1,0.15,0.2];
+
+bug_names = {'WF', 'Combug', 'Bug2','Alg1', 'Alg2', 'Ibug','blind_bug'};
+
 for env_number = voorbeelden
     env_number
     for it = 1:length(results.environment(env_number).noise(1).bug)
@@ -171,8 +174,8 @@ for env_number = voorbeelden
         plot([120 80] ,[10,125],'o')
         
 
-        hold on, plot(20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,2)+5),20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,1)+5),'r')
-        title([results.environment(env_number).noise(1).bug(it).bug_name,' (',...
+        hold on, plot(20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,2)+5),20*(results.environment(env_number).noise(1).bug(it).trajectory(2:end,1)+5),'g','LineWidth',1)
+        title([bug_names{it},' (',...
             num2str(size(results.environment(env_number).noise(1).bug(it).trajectory,1)/10), ' sec)'],'Interpreter', 'none')
 
 
