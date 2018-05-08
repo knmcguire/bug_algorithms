@@ -117,7 +117,7 @@ class ComBugController:
                 self.WF.init()
         elif self.state=="ROTATE_TO_GOAL":
 
-            if self.logicIsCloseTo(0,self.current_UWB_bearing,0.05)  :
+            if self.logicIsCloseTo(0,self.current_UWB_bearing,0.1)  :
                 self.first_rotate = False
                 self.transition("FORWARD")
             if self.RRT.getRealDistanceToWall()<self.distance_to_wall+0.1:

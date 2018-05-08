@@ -37,7 +37,7 @@ class WallFollowController:
     def __init__(self):
         self.distance_to_wall=self.WF.getWantedDistanceToWall();
         self.direction = self.WF.getDirectionTurn();
-        self.state =  "ROTATE_TO_GOAL"
+        self.state =  "FORWARD"
 
         
         
@@ -69,7 +69,8 @@ class WallFollowController:
             if self.RRT.getLowestValue()<self.distance_to_wall+0.1 and self.RRT.getLowestValue() != 0.0:
                 self.transition("WALL_FOLLOWING")
         elif self.state=="ROTATE_TO_GOAL":
-            if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.05)  :
+            print self.RRT.getUWBBearing()
+            if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.1)  :
                 self.first_rotate = False
                 self.transition("FORWARD")
                 
