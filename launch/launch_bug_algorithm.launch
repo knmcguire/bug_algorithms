@@ -1,8 +1,9 @@
+<?xml version="1.0"?>
 <launch>
-   <group ns="bot0">
+   <group ns="bot1">
       <node pkg="bug_algorithms" type="bug_algorithms.py" name="bug_algorithms" output="screen">
         <!-- bug_types: wf, com_bug, bug_2, alg_1, alg_2, i_bug, blind_bug, gradient_bug, i_bug_2-->
-      	<param name="bug_type" value="com_bug" />
+      	<param name="bug_type" value="wf" />
       </node>
    </group>
     <node pkg="argos_bridge" type="argos_ros_start_sim_server" name="argos_ros_start_sim_server" output="screen"  >  
@@ -11,6 +12,11 @@
     <!--param name="argos_world_file_name" value="/argos_worlds/rand_env_test.argos"/-->
  <!--param name="file_name_env_path_rel" value="/argos_worlds/experiment_envs/"/-->
      </node>
+
+
+  <!-- Environment Generate Node -->
+<node pkg="indoor_environment_generator" type="indoor_environment_generator_node" name="indoor_environment_generator_node" output="screen"/>
+
 </launch>
 
 

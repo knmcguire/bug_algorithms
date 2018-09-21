@@ -32,13 +32,13 @@ class RecieveROSTopic:
     lowestValue = 1000.0
     range_left = 1000.0
     range_right = 1000.0
-    range_front_left =  1000.0 
-    range_front_right =  1000.0 
+    range_front_left =  1000.0
+    range_front_right =  1000.0
 
-    range_middle =  1000.0 
-    
+    range_middle =  1000.0
 
-    
+
+
     pose_bot = PoseStamped()
     pose_tower = PoseStamped()
 
@@ -54,7 +54,7 @@ class RecieveROSTopic:
     range=1000.0
     bearing = 2000.0
     odometry=0;
-    
+
     # Collect current heading and odometry from position sensor
     def pose_callback(self,pose):
         (roll,pitch,yaw) = euler_from_quaternion([pose.pose.orientation.x, \
@@ -62,25 +62,25 @@ class RecieveROSTopic:
         self.heading = yaw;
         self.odometry = math.cos(yaw)*pose.pose.position.x - math.sin(yaw)*pose.pose.position.y
         self.pose_bot = pose
-        
-        
+
+
     def pose_callback_tower(self,pose):
         (roll,pitch,yaw) = euler_from_quaternion([pose.pose.orientation.x, \
         pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w])
         self.pose_tower = pose
-    
-    
-    # Collect range and bearing to goal (or other bots)        
+
+
+    # Collect range and bearing to goal (or other bots)
     def rab_callback(self,rab_list):
-        for it in range(0,rab_list.n): 
+        for it in range(0,rab_list.n):
             self.range = rab_list.Rangebearings[it].range
-            angle = rab_list.Rangebearings[it].angle 
+            angle = rab_list.Rangebearings[it].angle
             self.bearing = self.wrap_pi(angle)
 
 
-    # Several functions for calculating 
+    # Several functions for calculating
     def prox_callback(self, proxList):
-        
+
 
         # Find the closest obstacle (other robot or wall).  The closest obstacle
         # is the one with the greatest 'value'.
@@ -92,9 +92,9 @@ class RecieveROSTopic:
         self.angle_wall = 2000.0
         self.real_distance_to_wall =1000.0
         self.border_obstacle_left=0;
-        
-        
-        self.range_right = self.numRangeMax(proxList.proximities[3].value);  
+
+
+        self.range_right = self.numRangeMax(proxList.proximities[3].value);
         self.range_left = self.numRangeMax(proxList.proximities[1].value);
         self.range_front_left = self.numRangeMax( proxList.proximities[23].value);
         self.range_front_right = self.numRangeMax( proxList.proximities[4].value);
@@ -103,14 +103,14 @@ class RecieveROSTopic:
 
         #Calculate the neares obstacle in the proximity front wedge sesor
         self.calculateLowestValue(proxList)
-        
+
         #Calculate the angle towards the right side of the border
         self.calculateRightObstacleBorder(proxList)
 
         #calculate the angle of which the bot approaches a wall, to get the perpendicular distance
         self.calculateWallRANSAC(proxList)
-        
-        
+
+
     def getRangeLeft(self):
         return self.range_left
     def getRangeRight(self):
@@ -147,7 +147,7 @@ class RecieveROSTopic:
         return self.pose_bot
     def getPoseTower(self):
         return self.pose_tower
-        
+
     def calculateLowestValue(self,proxList):
         for it in range(4,len(proxList.proximities)):
             if self.numRangeMax(proxList.proximities[it].value) < self.lowestValue:
@@ -156,27 +156,27 @@ class RecieveROSTopic:
     def calculateRightObstacleBorder(self,proxList):
         deg=numpy.linspace(-0.52,0.52,num=20)
         for it in list(reversed(range(4,len(proxList.proximities)))):
-            if self.numRangeMax(proxList.proximities[it].value)<2.0: 
+            if self.numRangeMax(proxList.proximities[it].value)<2.0:
                 self.border_obstacle_right = deg[it-4]
                 self.range_obstacle_right = self.numRangeMax(proxList.proximities[it].value);
-                            
+
     def calculateWallRANSAC(self, proxList):
         if self.closestObs is not None:
             X=numpy.empty((0,0))[numpy.newaxis];
             Y=numpy.empty((0,0))[numpy.newaxis];
             deg_new=numpy.empty((0,0))[numpy.newaxis];
-            
+
             deg=numpy.linspace(-0.52,0.52,num=20)
-            
+
             # if the ranges are within range, put them in a list for ransac
             for it in range(4,len(proxList.proximities)):
                 if self.numRangeMax(proxList.proximities[it].value) <2.0:
                    # print("Y",self.numRangeMax(proxList.proximities[it].value))
-                   # print("X",math.sin(deg[it-4])*proxList.proximities[it].value)      
+                   # print("X",math.sin(deg[it-4])*proxList.proximities[it].value)
                     Y= numpy.append(Y,self.numRangeMax(proxList.proximities[it].value))
                     X= numpy.append(X,math.sin(deg[it-4])*proxList.proximities[it].value)
                     deg_new=numpy.append(deg_new,deg[it-4]);
-                                        
+
             #If there are more than 5 samples, continue
             if len(X)>5:
 
@@ -186,15 +186,15 @@ class RecieveROSTopic:
 
                 Xlocal = X;
                 Ylocal = Y;
- 
+
                 coefs = numpy.empty((0,0))
                 intercepts = numpy.empty((0,0))
                 scores = numpy.empty((0,0))
-        
+
                 coef1 = 0
                 intercept1 = 0
-                for it  in range(0,2):      
-                          
+                for it  in range(0,2):
+
                     ransac = linear_model.RANSACRegressor()
                     ransac.fit(Xlocal, Ylocal )
                     inlier_mask = ransac.inlier_mask_
@@ -219,14 +219,14 @@ class RecieveROSTopic:
                         break
                 #plt.hold(False)
                 #plt.pause(0.01)
-                
+
                # if len(coefs)<2:
                 self.angle_wall = math.atan(coefs[0])
 
                 sum_distance = 0
                 for it in range(0,len(X)):
                     sum_distance = sum_distance+Y[it][0]*math.cos(-self.angle_wall - deg_new[it])
-                               
+
                 self.real_distance_to_wall = sum_distance/len(X)
                 #else:
                    # intersect = coefs[0]*(intercepts[1]-intercepts[0])/(coefs[0]-coefs[1])+intercepts[0]
@@ -252,23 +252,23 @@ class RecieveROSTopic:
 #                             self.angle_wall = math.atan(coefs[1])
 #                         else:
 #                             self.angle_wall = 2000.0
-#                              
+#
 #                 if self.angle_wall is not 2000.0:
 #                     self.real_distance_to_wall = self.range_middle*math.sin(1.57+self.angle_wall)
 #                 else:
 #                     self.real_distance_to_wall==1000.0
-                    
+
                 #print("WALL ANGLE IS: ", self.angle_wall)
                 #print("real_distance_is: ", self.real_distance_to_wall)
 
-                
+
                 """
                 self.real_distance_to_wall = 1000.0;
                 sum_distance = 0;
-                
+
                 for it in range(0,len(X)):
                     sum_distance = sum_distance+Y[it][0]*math.cos(-self.angle_wall - deg_new[it])
-                
+
                 print("found lines: ",len(coefs))
                 intersect = 0;
                 if len(coefs)==2:
@@ -280,19 +280,18 @@ class RecieveROSTopic:
                     if scores[0] is not 1.0:
                         for it in range(0,len(X)):
                             sum_distance = sum_distance+Y[it][0]*math.cos(-self.angle_wall - deg_new[it])
-                                       
+
                         self.real_distance_to_wall = sum_distance/len(X)
                         self.angle_wall = coefs[0]
                 """
-         
 
-        
-        
+
+
+
     def wrap_pi(self, angles_rad):
-        return numpy.mod(angles_rad+numpy.pi, 2.0 * numpy.pi) - numpy.pi        
+        return numpy.mod(angles_rad+numpy.pi, 2.0 * numpy.pi) - numpy.pi
     def numRangeMax(self, value = 0.0):
         if value == 0.0:
             return 1000.0
         else:
-            return value 
-
+            return value

@@ -35,7 +35,7 @@ import i_bug_2_controller
 
 from geometry_msgs.msg import Twist
 from scipy.stats._continuous_distns import beta
-import wall_following 
+import wall_following
 import receive_rostopics
 
 class BugAlgorithms:
@@ -65,11 +65,11 @@ class BugAlgorithms:
             "gradient_bug": gradient_bug_controller.GradientBugController(),
 
         }
-        
+
         return switcher.get(argument, False)
-    
+
     def __init__(self):
-        # Subscribe to topics and init a publisher 
+        # Subscribe to topics and init a publisher
         self.cmdVelPub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         #rospy.Subscriber('proximity', ProximityList, self.RRT.prox_callback,queue_size=100)
         #rospy.Subscriber('rangebearing', RangebearingList, self.RRT.rab_callback,queue_size=100)
@@ -87,23 +87,23 @@ class BugAlgorithms:
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
             start_sim(1,1,1)
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             print "Service call failed: %s"%e
-            
+
         #full_param_name = rospy.search_param('bug_type')
-        self.bug_type = rospy.get_param('/bot0/bug_algorithms/bug_type')
-        
+        self.bug_type = rospy.get_param('bug_algorithms/bug_type')
+
         self.bug_controller = self.getController(self.bug_type);
         if self.bug_controller == False:
             print "Wrong bug type!"
 
-        
+
     # Ros loop were the rate of the controller is handled
     def rosLoop(self):
-        
+
         rospy.spin()
 #         rate = rospy.Rate(1000)
-# 
+#
 #         while not rospy.is_shutdown():
 #             rospy.wait_for_message("proximity", ProximityList)
 #             twist = self.bug_controller.stateMachine(self.RRT);
@@ -118,7 +118,8 @@ class BugAlgorithms:
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
             if(self.random_environment):
-                start_sim(1,1,1)
+                #start_sim(1,1,1)
+                start_sim(4,1,1)
                 self.random_environment = False
                 print "python, send regenerate environment"
             else:
@@ -126,30 +127,30 @@ class BugAlgorithms:
                 print "python, reset experiment with same environment"
 
 
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             print "Service call failed: %s"%e
         if self.bug_controller == False:
             print "Wrong bug type!"
-            
-    def runStateMachine(self, req):   
-        
+
+    def runStateMachine(self, req):
+
         rospy.wait_for_service('/stop_sim')
         try:
             stop_sim = rospy.ServiceProxy('/stop_sim', Empty)
-        except rospy.ServiceException, e:
+        except rospy.ServiceException as e:
             print "Service call failed: %s"%e
-        
+
         self.RRT.prox_callback(req.proxList);
         self.RRT.rab_callback(req.RabList);
         self.RRT.pose_callback(req.PosQuat);
-        
+
         if req.reset or self.reset_bug:
             self.WF.init()
             self.bug_controller.__init__()
             self.reset_bug = False
             self.odometry = PoseStamped()
 
-        if (self.RRT.getUWBRange()>100):
+        if (self.RRT.getUWBRange()>10):
             if self.bug_type == 'alg_1':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
             elif self.bug_type == 'alg_2' :
@@ -159,14 +160,14 @@ class BugAlgorithms:
             else:
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level))
             return GetCmdsResponse(self.twist)
-        else: 
+        else:
             print "bug has reached goal"
             self.twist.linear.x = 0
             self.twist.angular.z = 0
             stop_sim()
             return GetCmdsResponse(self.twist)
 
-    
+
     def get_odometry_from_commands(self,noise):
         if noise < 0.01:
             noisy_velocity_estimate = self.twist.linear.x*0.035
@@ -175,16 +176,16 @@ class BugAlgorithms:
         self.odometry.pose.position.x = self.odometry.pose.position.x + noisy_velocity_estimate*math.cos(self.RRT.getHeading())
         self.odometry.pose.position.y = self.odometry.pose.position.y + noisy_velocity_estimate*math.sin(self.RRT.getHeading())
         return self.odometry
-        
+
     def random_environment(self,req):
         self.random_environment = req.data;
-        
+
     def noise_level_cb(self,req):
         self.noise_level = req.data;
 
-    
+
 if __name__ == '__main__':
-    
+
     time.sleep(2)
     rospy.init_node("bug_algorithms")
     controller = BugAlgorithms()
@@ -193,4 +194,3 @@ if __name__ == '__main__':
         controller.rosLoop()
     except rospy.ROSInterruptException:
         pass
-

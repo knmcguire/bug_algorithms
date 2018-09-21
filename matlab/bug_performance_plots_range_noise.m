@@ -1,13 +1,8 @@
-clear all, clc
 
 
 
 
-load /home/knmcguire/Documents/experiments/bug_algorithms/results/results_03-13-2018_06-04.mat
-
-
-
-bug_names = {'wf', 'com_bug', 'bug_2','alg_1', 'alg_2', 'i_bug','blind_bug'};
+bug_names = {'wf', 'com_bug', 'i_bug', 'bug_2','alg_1', 'alg_2'};
 
 
 reached_goal = zeros(length(results.environment)-1,length(bug_names),4);

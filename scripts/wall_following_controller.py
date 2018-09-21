@@ -39,8 +39,8 @@ class WallFollowController:
         self.direction = self.WF.getDirectionTurn();
         self.state =  "FORWARD"
 
-        
-        
+
+
     def rosLoop(self):
 
         rate = rospy.Rate(100)
@@ -49,11 +49,11 @@ class WallFollowController:
             self.stateMachine()
             rate.sleep()
 
-    
+
     def stateMachine(self,RRT,odometry):
-        
+
         self.RRT = RRT
-        
+
         range_front = 1000.0
         range_side = 1000.0
         if self.direction is 1:
@@ -73,18 +73,18 @@ class WallFollowController:
             if self.logicIsCloseTo(0,self.RRT.getUWBBearing(),0.1)  :
                 self.first_rotate = False
                 self.transition("FORWARD")
-                
-        # Handle actions   
+
+        # Handle actions
         if self.state == "FORWARD":
             twist=self.WF.twistForward()
         elif self.state == "WALL_FOLLOWING":
             twist = self.WF.wallFollowingController(range_side,range_front,
-                                                    self.RRT.getLowestValue(),self.RRT.getHeading(),self.RRT.getArgosTime(),self.direction)     
+                                                    self.RRT.getLowestValue(),self.RRT.getHeading(),self.RRT.getArgosTime(),self.direction)
         elif self.state=="ROTATE_TO_GOAL":
             twist = self.WF.twistTurnInCorner(self.direction)
 
         print self.state
-                
+
         self.lastTwist = twist
         return twist
 
@@ -95,9 +95,8 @@ class WallFollowController:
 
     # See if a value is within a margin from the wanted value
     def logicIsCloseTo(self, real_value = 0.0, checked_value =0.0, margin=0.05):
-        
+
         if real_value> checked_value-margin and real_value< checked_value+margin:
-            return True 
+            return True
         else:
             return False
-        

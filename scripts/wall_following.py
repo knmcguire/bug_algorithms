@@ -36,12 +36,12 @@ class WallFollowing:
     distance_from_wall = 0.5
     distance_go_around_corner_90 = 2.5*0.35;
     location_precision = 0.5
-    
+
     MAX_FORWARD_SPEED=1.0
     MAX_ROTATION_SPEED=2.5
-    
+
     def init(self):
-        
+
         self.state = "START_WALL_FOLLOWING"
         self.time = 0
         self.state_start_time = 0
@@ -62,12 +62,12 @@ class WallFollowing:
         print "RESET"
         print self.direction_turn
 
-            
+
 
 
     def wallFollowingController(self, range_side, range_front, closest_obstacle,
                                  current_heading, time_argos, direction):
-        
+
         self.direction_turn = direction
 
         self.time = time_argos
@@ -84,16 +84,16 @@ class WallFollowing:
             # if front range is lost, assume you are on the brink of a corner
             if range_front > 2.0:
                 self.last_range_front_before_lost = self.last_range_front
-                self.last_range_side_before_lost = self.last_range_side - 0.2 
+                self.last_range_side_before_lost = self.last_range_side - 0.2
                 self.last_heading_before_lost = self.last_heading
                 self.heading_when_started_turning = current_heading + 1.50
                 self.has_alligned = False
                 # Calculate how far the bot is from the edge of the corner, which is variable when this happens while alligning to a wall
                 self.distance_go_around_corner = self.last_range_side_before_lost*math.sin(self.heading_when_started_turning-self.last_heading_before_lost-0.52)
-                self.transition("ROTATE_AROUND_CORNER") 
-        elif self.state == "WALL_FOLLOWING": 
+                self.transition("ROTATE_AROUND_CORNER")
+        elif self.state == "WALL_FOLLOWING":
             # IF a close obstacle is found while wall following, assume you are in a corner
-            if closest_obstacle<self.distance_from_wall+0.1: 
+            if closest_obstacle<self.distance_from_wall+0.1:
                 self.last_heading = current_heading;
                 self.heading_when_started_turning = current_heading
                 self.transition("ROTATE_TO_ALIGN_WALL")
@@ -107,7 +107,7 @@ class WallFollowing:
                 # Since with wall following, we arlready assume that the bot is alligned with the wall, therefore these assumptions
                 self.heading_when_started_turning = current_heading + 1.50
                 self.distance_go_around_corner = self.distance_go_around_corner_90
-                
+
                 self.has_alligned = True
                 self.transition("ROTATE_AROUND_CORNER")
         elif self.state=="ROTATE_AROUND_CORNER":
@@ -125,7 +125,7 @@ class WallFollowing:
             print "stop moving"
         else:
             die("Error: Invalid state")
-        
+
         print "State WallFollowing: " + self.state
 
         #
@@ -134,11 +134,11 @@ class WallFollowing:
         twist = None
         if self.state == "WALL_FOLLOWING":
             # Do simple wall following based on the front range sensor of the wedge and the the left sensor
-            twist = self.twistWallFollowing(range_side, range_front)     
+            twist = self.twistWallFollowing(range_side, range_front)
         elif self.state== "ROTATE_TO_ALIGN_WALL":
             twist = self.twistTurnInCorner(direction)
         elif self.state == "ROTATE_AROUND_CORNER":
-            twist = self.twistStop()  
+            twist = self.twistStop()
             #TODO: do this based on odometry!
             if(current_heading-self.heading_when_started_turning>-1.50) and self.has_alligned == False:
                 twist = self.twistTurnInCorner(direction)
@@ -157,7 +157,7 @@ class WallFollowing:
                     self.last_range_side_before_lost = self.distance_from_wall
 
         elif self.state == "STOP_MOVING":
-            twist = self.twistStop()  
+            twist = self.twistStop()
         else:
             die("Error: Invalid state")
         self.last_range_front = range_front;
@@ -170,25 +170,25 @@ class WallFollowing:
     def transition(self, newState):
         self.state = newState
         self.state_start_time = self.time
-            
+
     # Wall following logic
     def twistWallFollowing(self, range_side = 0.0, range_front=0.0):
         v = self.MAX_FORWARD_SPEED
         w = 0.0
-        
+
         #Calculating height of triangle if the angle between sides is known
         # combination of:
         # 1- SAS for triangle area
         # 2- Half base times height method
         # 3- Cosinus Rule
         beta = numpy.deg2rad(60)
-        
+
         height=(range_side*range_front*math.sin(beta))/math.sqrt(math.pow(range_side,2)+math.pow(range_front,2)-2*range_side*range_front*math.cos(beta))
-        
+
         #This is to compare the range side with to keep it perpendicular to the wall
         range_equal_to =  range_front*math.cos(numpy.deg2rad(60))
-                
-        #Most important, first check if the robot if away from the wall!        
+
+        #Most important, first check if the robot if away from the wall!
         if self.logicIsCloseTo(height, self.distance_from_wall, 0.1):
             #If so, just try to align to the wall by changing the angle
             #print "Align with wall"
@@ -198,7 +198,7 @@ class WallFollowing:
                 w=0.15*self.direction_turn
             else:
                 w=0
-        else: 
+        else:
             #if not, increase or decrease the distance by changing the heading
             # print "Keep distance from wall"
              if height > self.distance_from_wall :
@@ -210,12 +210,12 @@ class WallFollowing:
 
              else:
                  w=0
-    
+
         twist = Twist()
         twist.linear.x = v
         twist.angular.z = w
         return twist
-    
+
     def twistTurnInCorner(self,direction_turn):
         v = 0
         w = -1*direction_turn*self.MAX_ROTATION_SPEED
@@ -223,7 +223,7 @@ class WallFollowing:
         twist.linear.x = v
         twist.angular.z = w
         return twist
-    
+
     def twistTurn(self, rate,speed):
         v = speed
         w = rate
@@ -231,8 +231,8 @@ class WallFollowing:
         twist.linear.x = v
         twist.angular.z = w
         return twist
-        
-    
+
+
     def twistTurnAroundCorner(self,radius, direction_turn):
         v = self.MAX_FORWARD_SPEED
         w = direction_turn*v/radius
@@ -240,7 +240,7 @@ class WallFollowing:
         twist.linear.x = v
         twist.angular.z = w
         return twist
-    
+
     def twistForward(self):
         v = self.MAX_FORWARD_SPEED
         w = 0
@@ -248,7 +248,7 @@ class WallFollowing:
         twist.linear.x = v
         twist.angular.z = w
         return twist
-    
+
     def twistStop(self):
         v = 0
         w = 0
@@ -256,7 +256,7 @@ class WallFollowing:
         twist.linear.x = v
         twist.angular.z = w
         return twist
-    
+
     def twistRotateToGoal(self):
         v = 0
         w = self.MAX_FORWARD_SPEED * numpy.sign(self.RRT.getUWBBearing())
@@ -266,29 +266,29 @@ class WallFollowing:
         return twist
 
     def logicIsCloseTo(self, real_value = 0.0, checked_value =0.0, margin=0.05):
-        
+
         if real_value> checked_value-margin and real_value< checked_value+margin:
-            return True 
+            return True
         else:
             return False
-        
+
     def wrap_pi(self, angles_rad):
-        return numpy.mod(angles_rad+numpy.pi, 2.0 * numpy.pi) - numpy.pi  
-    
+        return numpy.mod(angles_rad+numpy.pi, 2.0 * numpy.pi) - numpy.pi
+
     def getWantedDistanceToWall(self):
         return self.distance_from_wall;
-    
+
     def getDirectionTurn(self):
         return self.direction_turn;
-    
+
     def getMaximumForwardSpeed(self):
         return self.MAX_FORWARD_SPEED
-    
+
     def getMaximumRotationSpeed(self):
         return self.MAX_ROTATION_SPEED
-    
+
     def getDistanceAroundCorner90(self):
         return self.distance_go_around_corner_90
-    
+
     def getLocationPrecision(self):
         return self.location_precision
