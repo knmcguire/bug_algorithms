@@ -86,7 +86,8 @@ class BugAlgorithms:
 
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
-            start_sim(1,1,1)
+	    // Start sim with indoor environment from file (from indoor environment generator package)
+            start_sim(4,1,1)
         except rospy.ServiceException as e:
             print "Service call failed: %s"%e
 
@@ -139,6 +140,7 @@ class BugAlgorithms:
             stop_sim = rospy.ServiceProxy('/stop_sim', Empty)
         except rospy.ServiceException as e:
             print "Service call failed: %s"%e
+            
 
         self.RRT.prox_callback(req.proxList);
         self.RRT.rab_callback(req.RabList);
