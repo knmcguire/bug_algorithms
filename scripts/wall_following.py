@@ -59,8 +59,6 @@ class WallFollowing:
         self.distance_from_wall = 0.4
         self.distance_go_around_corner_90 = 2.3*0.35;
         self.location_precision = 0.5
-        print "RESET"
-        print self.direction_turn
 
 
 
@@ -112,7 +110,7 @@ class WallFollowing:
                 self.transition("ROTATE_AROUND_CORNER")
         elif self.state=="ROTATE_AROUND_CORNER":
             # If the wall is found by the wanted triangle by ranges, go to wall following
-            if self.logicIsCloseTo(range_side,range_front*math.cos(numpy.deg2rad(60)), 0.1) and self.logicIsCloseTo( self.last_heading_before_lost,current_heading, 1.50):
+            if self.logicIsCloseTo(range_side,range_front*math.cos(numpy.deg2rad(60)), 0.1) and range_front < 1.5 and self.logicIsCloseTo( self.last_heading_before_lost,current_heading, 1.50):
                 self.transition("WALL_FOLLOWING")
             # If a obstacle is seen, assume you are in a corner so align with wall
             if closest_obstacle<self.distance_from_wall + 0.1:
@@ -131,7 +129,7 @@ class WallFollowing:
         #
         # Handle state actions
         #
-        twist = None
+        twist = Twist()
         if self.state == "WALL_FOLLOWING":
             # Do simple wall following based on the front range sensor of the wedge and the the left sensor
             twist = self.twistWallFollowing(range_side, range_front)
@@ -163,7 +161,7 @@ class WallFollowing:
         self.last_range_front = range_front;
         self.last_range_side = range_side;
         self.last_heading = current_heading;
-        return twist
+        return twist, self.state
 
 
     # Transition state and restart the timer

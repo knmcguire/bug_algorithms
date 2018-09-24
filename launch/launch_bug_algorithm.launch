@@ -8,7 +8,7 @@
    <group ns="bot1">
       <node pkg="bug_algorithms" type="bug_algorithms.py" name="bug_algorithms" output="screen">
         <!-- bug_types: wf, com_bug, bug_2, alg_1, alg_2, i_bug, blind_bug, gradient_bug, i_bug_2-->
-      	<param name="bug_type" value="wf" />
+      	<param name="bug_type" value="gradient_embedded_bug" />
       </node>
    </group>
 

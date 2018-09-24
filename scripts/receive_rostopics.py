@@ -54,6 +54,7 @@ class RecieveROSTopic:
     range=1000.0
     bearing = 2000.0
     odometry=0;
+    rssi_tower = 0;
 
     # Collect current heading and odometry from position sensor
     def pose_callback(self,pose):
@@ -76,6 +77,10 @@ class RecieveROSTopic:
             self.range = rab_list.Rangebearings[it].range
             angle = rab_list.Rangebearings[it].angle
             self.bearing = self.wrap_pi(angle)
+            
+            
+    def rssi_tower_callback(self,rssi):
+        self.rssi_tower = rssi
 
 
     # Several functions for calculating
@@ -147,6 +152,8 @@ class RecieveROSTopic:
         return self.pose_bot
     def getPoseTower(self):
         return self.pose_tower
+    def getRSSITower(self):
+        return self.rssi_tower.data
 
     def calculateLowestValue(self,proxList):
         for it in range(4,len(proxList.proximities)):

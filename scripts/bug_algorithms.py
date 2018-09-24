@@ -20,6 +20,7 @@ from argos_bridge.srv import GetCmdsResponse
 from std_msgs.msg import String
 from std_msgs.msg import Bool
 from std_msgs.msg import Float64
+from std_msgs.msg import Float32
 
 from std_srvs.srv import Empty
 
@@ -31,6 +32,8 @@ import alg_2_controller
 import wall_following_controller
 import blind_bug_controller
 import gradient_bug_controller
+import gradient_bug_embedded_controller
+
 import i_bug_2_controller
 
 from geometry_msgs.msg import Twist
@@ -63,6 +66,7 @@ class BugAlgorithms:
             "wf": wall_following_controller.WallFollowController(),
             "blind_bug": blind_bug_controller.BlindBugController(),
             "gradient_bug": gradient_bug_controller.GradientBugController(),
+            "gradient_embedded_bug": gradient_bug_embedded_controller.GradientBugController(),
 
         }
 
@@ -74,10 +78,12 @@ class BugAlgorithms:
         #rospy.Subscriber('proximity', ProximityList, self.RRT.prox_callback,queue_size=100)
         #rospy.Subscriber('rangebearing', RangebearingList, self.RRT.rab_callback,queue_size=100)
         #rospy.Subscriber('position', PoseStamped, self.RRT.pose_callback,queue_size=100)
-        rospy.Subscriber('/bot1/position', PoseStamped, self.RRT.pose_callback_tower,queue_size=10)
+        rospy.Subscriber('/bot1/position', PoseStamped, self.RRT.pose_callback,queue_size=10)
+        rospy.Subscriber('/tower/position', PoseStamped, self.RRT.pose_callback_tower,queue_size=10)
         rospy.Subscriber('/switch_bug', String, self.switchBug,queue_size=10)
         rospy.Subscriber('/random_environment', Bool, self.random_environment,queue_size=10)
         rospy.Subscriber('/noise_level', Float64, self.noise_level_cb,queue_size=10)
+        rospy.Subscriber('/bot1/RSSI_to_tower', Float32, self.RRT.rssi_tower_callback,queue_size=10)
 
         rospy.wait_for_service('/start_sim')
 
@@ -86,7 +92,7 @@ class BugAlgorithms:
 
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
-	    // Start sim with indoor environment from file (from indoor environment generator package)
+	    # Start sim with indoor environment from file (from indoor environment generator package)
             start_sim(4,1,1)
         except rospy.ServiceException as e:
             print "Service call failed: %s"%e
@@ -151,7 +157,7 @@ class BugAlgorithms:
             self.bug_controller.__init__()
             self.reset_bug = False
             self.odometry = PoseStamped()
-
+        
         if (self.RRT.getUWBRange()>10):
             if self.bug_type == 'alg_1':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
@@ -160,7 +166,9 @@ class BugAlgorithms:
             elif self.bug_type == 'i_bug':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),self.noise_level)
             else:
-                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level))
+                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.2))#self.noise_level))
+            print "CHECK TWIST"
+            print self.twist.linear.x
             return GetCmdsResponse(self.twist)
         else:
             print "bug has reached goal"
