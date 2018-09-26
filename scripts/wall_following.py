@@ -124,7 +124,7 @@ class WallFollowing:
         else:
             die("Error: Invalid state")
 
-        print "State WallFollowing: " + self.state
+       # print "State WallFollowing: " + self.state
 
         #
         # Handle state actions
@@ -148,7 +148,7 @@ class WallFollowing:
 
             if (self.time - self.state_start_time)<self.distance_go_around_corner/0.35 * 10 and self.has_alligned == True:
                 twist = self.twistForward()
-                print "go forward"
+               # print "go forward"
             elif (self.time - self.state_start_time)>self.distance_go_around_corner/0.35 * 10  and self.has_alligned == True:
                 twist = self.twistTurnAroundCorner(self.last_range_side_before_lost+0.3,direction)
                 if(self.last_range_side_before_lost>999):

@@ -53,6 +53,14 @@ class BugAlgorithms:
     twist = Twist()
     noise_level = 0.0;
     odometry = PoseStamped()
+    odometry_perfect = PoseStamped()
+    odometry_x_array = []
+    odometry_y_array = []
+
+    odometry_x_per_array = []
+    odometry_y_per_array = []
+    
+    previous_time = 0
 
 
     def getController(self,argument):
@@ -78,12 +86,12 @@ class BugAlgorithms:
         #rospy.Subscriber('proximity', ProximityList, self.RRT.prox_callback,queue_size=100)
         #rospy.Subscriber('rangebearing', RangebearingList, self.RRT.rab_callback,queue_size=100)
         #rospy.Subscriber('position', PoseStamped, self.RRT.pose_callback,queue_size=100)
-        rospy.Subscriber('/bot1/position', PoseStamped, self.RRT.pose_callback,queue_size=10)
+        rospy.Subscriber('position', PoseStamped, self.RRT.pose_callback,queue_size=10)
         rospy.Subscriber('/tower/position', PoseStamped, self.RRT.pose_callback_tower,queue_size=10)
         rospy.Subscriber('/switch_bug', String, self.switchBug,queue_size=10)
         rospy.Subscriber('/random_environment', Bool, self.random_environment,queue_size=10)
         rospy.Subscriber('/noise_level', Float64, self.noise_level_cb,queue_size=10)
-        rospy.Subscriber('/bot1/RSSI_to_tower', Float32, self.RRT.rssi_tower_callback,queue_size=10)
+        rospy.Subscriber('RSSI_to_tower', Float32, self.RRT.rssi_tower_callback,queue_size=10)
 
         rospy.wait_for_service('/start_sim')
 
@@ -159,9 +167,15 @@ class BugAlgorithms:
             self.bug_controller.__init__()
             self.reset_bug = False
             self.odometry = PoseStamped()
+            self.odometry_perfect = PoseStamped()
+
+            self.odometry_x_array = []
+            self.odometry_y_array = []
+            self.odometry_x_per_array = []
+            self.odometry_y_per_array = []
         
-        print("close to goal ",self.RRT.getUWBRange())
-        if (self.RRT.getUWBRange()>100):
+        #print("close to goal ",self.RRT.getUWBRange())
+        if (self.RRT.getUWBRange()>150):
             if self.bug_type == 'alg_1':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
             elif self.bug_type == 'alg_2' :
@@ -169,7 +183,22 @@ class BugAlgorithms:
             elif self.bug_type == 'i_bug':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),self.noise_level)
             else:
-                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.2))#self.noise_level))
+
+                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level))
+        
+        
+            self.odometry_x_array.append(self.odometry.pose.position.x)
+            self.odometry_y_array.append(self.odometry.pose.position.y)
+
+          #  numpy.savetxt('rel_x.txt',self.odometry_x_array,delimiter=',')
+          #  numpy.savetxt('rel_y.txt',self.odometry_y_array,delimiter=',')
+            self.get_odometry_from_commands_perfect()
+        
+            self.odometry_x_per_array.append(self.odometry_perfect.pose.position.x)
+            self.odometry_y_per_array.append(self.odometry_perfect.pose.position.y)
+            
+          #  numpy.savetxt('rel_x_per.txt',self.odometry_x_per_array,delimiter=',')
+           # numpy.savetxt('rel_y_per.txt',self.odometry_y_per_array,delimiter=',')            
             return GetCmdsResponse(self.twist)
         else:
             print "bug has reached goal"
@@ -180,12 +209,23 @@ class BugAlgorithms:
 
 
     def get_odometry_from_commands(self,noise):
+        current_time=float(self.RRT.getArgosTime())/10
+        diff_time = current_time - self.previous_time
         if noise < 0.01:
-            noisy_velocity_estimate = self.twist.linear.x*0.035
+            noisy_velocity_estimate = self.twist.linear.x*0.35
+            noisy_heading = self.RRT.getHeading()
         else:
-            noisy_velocity_estimate = numpy.random.normal(self.twist.linear.x*0.035,noise,1);
-        self.odometry.pose.position.x = self.odometry.pose.position.x + noisy_velocity_estimate*math.cos(self.RRT.getHeading())
-        self.odometry.pose.position.y = self.odometry.pose.position.y + noisy_velocity_estimate*math.sin(self.RRT.getHeading())
+            noisy_velocity_estimate = numpy.random.normal(self.twist.linear.x*0.35,noise,1);
+            noisy_heading =  numpy.random.normal(self.RRT.getHeading(),noise,1);
+        self.odometry.pose.position.x = self.odometry.pose.position.x + diff_time*noisy_velocity_estimate*math.cos(noisy_heading)
+        self.odometry.pose.position.y = self.odometry.pose.position.y + diff_time*noisy_velocity_estimate*math.sin(noisy_heading)
+        self.previous_time = current_time
+        return self.odometry
+    
+    def get_odometry_from_commands_perfect(self):
+        noisy_velocity_estimate = self.twist.linear.x*0.035
+        self.odometry_perfect.pose.position.x = self.odometry_perfect.pose.position.x + noisy_velocity_estimate*math.cos(self.RRT.getHeading())
+        self.odometry_perfect.pose.position.y = self.odometry_perfect.pose.position.y + noisy_velocity_estimate*math.sin(self.RRT.getHeading())
         return self.odometry
 
     def random_environment(self,req):

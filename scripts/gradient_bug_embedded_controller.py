@@ -46,6 +46,8 @@ class GradientBugController:
     stateStartTime=0
     state = "ROTATE_TO_GOAL"
     rssi_goal_angle_adjust = 0
+    save_pos_x = []
+    save_pos_y = []
 
 
 
@@ -82,8 +84,11 @@ class GradientBugController:
         self.GB.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
         
         self.current_UWB_range = 0
+        self.current_UWB_bearing = 0
         
         self.rssi_goal_angle_adjust = 0
+        self.save_pos_x = []
+        self.save_pos_y = []
 
 
 
@@ -125,18 +130,42 @@ class GradientBugController:
 
 
         else:
+
             rel_x =  self.pose_tower.pose.position.x - bot_pose.pose.position.x  ;
             rel_y =   self.pose_tower.pose.position.y - bot_pose.pose.position.y ;
-            theta = self.wrap_pi(-1*self.RRT.getHeading()-self.rssi_goal_angle_adjust);
-
+            
+            theta = self.wrap_pi(-1*self.RRT.getHeading()+self.rssi_goal_angle_adjust);
+            #print("check theta")
+            #print(-1*self.RRT.getHeading())
+           # print(self.rssi_goal_angle_adjust)
+            #print(theta)
             rel_loc_x = rel_x*numpy.math.cos(theta)-rel_y*numpy.math.sin(theta)
             rel_loc_y = rel_x*numpy.math.sin(theta)+rel_y*numpy.math.cos(theta)
+            
+            
+            rel_x_adjust = bot_pose.pose.position.x*numpy.math.cos(self.rssi_goal_angle_adjust)-bot_pose.pose.position.y*numpy.math.sin(self.rssi_goal_angle_adjust)
+            rel_y_adjust = bot_pose.pose.position.x*numpy.math.sin(self.rssi_goal_angle_adjust)+bot_pose.pose.position.y*numpy.math.cos(self.rssi_goal_angle_adjust)
+
+
+            
+            self.save_pos_x.append(float(rel_x_adjust))
+            self.save_pos_y.append(float(rel_y_adjust))
+            #numpy.savetxt('rel_loc_x.txt',self.save_pos_x,delimiter=',')
+            #numpy.savetxt('rel_loc_y.txt',self.save_pos_y,delimiter=',')
+
+            #numpy.savetxt('rel_loc_x.txt',self.save_pos_x,delimiter=',')
+           # numpy.savetxt('rel_loc_y.txt',self.save_pos_y,delimiter=',')
+              #  raw_input("ARG!")
+
+
+
+
+
 
             self.current_UWB_bearing =  self.wrap_pi(numpy.arctan2(rel_loc_y,rel_loc_x))
             self.current_UWB_range = math.sqrt(math.pow(rel_loc_y,2)+math.pow(rel_loc_x,2))
             
-
-
+            
             #self.current_UWB_bearing = self.RRT.getUWBBearing();
         
         
@@ -146,8 +175,18 @@ class GradientBugController:
         if isinstance(self.current_UWB_bearing,numpy.ndarray):
             self.current_UWB_bearing=float(self.current_UWB_bearing[0])
             
+            
+        #print     self.RRT.getArgosTime()/10
+        rssi_noise_list =  numpy.random.normal(self.RRT.getRSSITower(),1,1);
+        rssi_noise =  float(rssi_noise_list[0])
+        if rssi_noise>-43:
+            rssi_noise = 43 
+        #rssi_noise = self.RRT.getRSSITower()
+        
+        #print self.RRT.getArgosTime()/10
+                    
         twist, self.rssi_goal_angle_adjust = self.GB.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
-                        self.RRT.getHeading(),self.current_UWB_bearing,self.current_UWB_range, self.RRT.getRSSITower(),self.RRT.getArgosTime()/10,False, self.WF,self.RRT)
+                        self.RRT.getHeading(),self.current_UWB_bearing,self.current_UWB_range, rssi_noise,self.RRT.getArgosTime()/10,False, self.WF,self.RRT)
         
         
 
