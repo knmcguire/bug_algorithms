@@ -79,7 +79,7 @@ class GradientBugController:
         self.mem_hit_point_range = 2000
         
         #Init embedded gradient bug
-        self.GB.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed())
+        self.GB.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
         
         self.current_UWB_range = 0
         
@@ -127,7 +127,7 @@ class GradientBugController:
         else:
             rel_x =  self.pose_tower.pose.position.x - bot_pose.pose.position.x  ;
             rel_y =   self.pose_tower.pose.position.y - bot_pose.pose.position.y ;
-            theta = -1*self.RRT.getHeading()-self.rssi_goal_angle_adjust;
+            theta = self.wrap_pi(-1*self.RRT.getHeading()-self.rssi_goal_angle_adjust);
 
             rel_loc_x = rel_x*numpy.math.cos(theta)-rel_y*numpy.math.sin(theta)
             rel_loc_y = rel_x*numpy.math.sin(theta)+rel_y*numpy.math.cos(theta)
@@ -143,8 +143,11 @@ class GradientBugController:
         
         
         # Handle State transition
+        if isinstance(self.current_UWB_bearing,numpy.ndarray):
+            self.current_UWB_bearing=float(self.current_UWB_bearing[0])
+            
         twist, self.rssi_goal_angle_adjust = self.GB.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
-                        self.RRT.getHeading(),self.current_UWB_bearing[0],self.current_UWB_range, self.RRT.getRSSITower(),self.RRT.getArgosTime()/10,False, self.WF,self.RRT)
+                        self.RRT.getHeading(),self.current_UWB_bearing,self.current_UWB_range, self.RRT.getRSSITower(),self.RRT.getArgosTime()/10,False, self.WF,self.RRT)
         
         
 

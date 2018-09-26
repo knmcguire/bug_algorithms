@@ -101,6 +101,8 @@ class BugAlgorithms:
         self.bug_type = rospy.get_param('bug_algorithms/bug_type')
 
         self.bug_controller = self.getController(self.bug_type);
+        self.bug_controller.__init__()
+
         if self.bug_controller == False:
             print "Wrong bug type!"
 
@@ -158,7 +160,8 @@ class BugAlgorithms:
             self.reset_bug = False
             self.odometry = PoseStamped()
         
-        if (self.RRT.getUWBRange()>10):
+        print("close to goal ",self.RRT.getUWBRange())
+        if (self.RRT.getUWBRange()>100):
             if self.bug_type == 'alg_1':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
             elif self.bug_type == 'alg_2' :
@@ -167,8 +170,6 @@ class BugAlgorithms:
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),self.noise_level)
             else:
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.2))#self.noise_level))
-            print "CHECK TWIST"
-            print self.twist.linear.x
             return GetCmdsResponse(self.twist)
         else:
             print "bug has reached goal"
@@ -199,6 +200,7 @@ if __name__ == '__main__':
     time.sleep(2)
     rospy.init_node("bug_algorithms")
     controller = BugAlgorithms()
+    
     #rospy.wait_for_service('get_vel_cmd')
     try:
         controller.rosLoop()
