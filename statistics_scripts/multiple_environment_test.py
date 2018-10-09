@@ -18,7 +18,7 @@ from shutil import copyfile
 def rosloop():
     bug_name = 'gradient_embedded_bug'
     noise_level = 0.2
-    amount_of_environment = 5
+    amount_of_environment = 100
     rospy.wait_for_service('/indoor_gen')
     indoor_gen_srv = rospy.ServiceProxy('/indoor_gen',Trigger)
     environment_random_pub = rospy.Publisher('/random_environment', Bool, queue_size=10)
@@ -79,10 +79,10 @@ def rosloop():
         rospy.wait_for_message('/finished_sim_matlab', Empty)
         print("sim is finished")
         
+        '''
         distance_data = []
         for row in csv.reader(open("/home/knmcguire/.ros/distances.txt"), delimiter=','):
             distance_data.append(row)
-            
         list = distance_data[len(distance_data)-1]
         print type(distance_data)
         print distance_data[len(distance_data)-1] 
@@ -90,6 +90,21 @@ def rosloop():
             made_it.append(int(1))
         else:
             made_it.append(int(0))
+        '''        
+        
+        did_it_make_it = []
+        for row in csv.reader(open("/home/knmcguire/.ros/did_it_make_it.txt"), delimiter=','):
+            did_it_make_it.append(row)
+        
+        #print did_it_make_it
+        list = did_it_make_it[0]
+        #print list
+        if float(list[0]) > 0.9:
+            made_it.append(int(1))
+        else:
+            made_it.append(int(0))
+        
+
             
         
         time.sleep(1)

@@ -62,7 +62,8 @@ class BugAlgorithms:
     
     previous_time = 0
 
-
+    send_stop = False
+    
     def getController(self,argument):
         switcher = {
             "com_bug": com_bug_controller.ComBugController(),
@@ -113,6 +114,8 @@ class BugAlgorithms:
 
         if self.bug_controller == False:
             print "Wrong bug type!"
+        
+        self.send_stop = False
 
 
     # Ros loop were the rate of the controller is handled
@@ -161,6 +164,13 @@ class BugAlgorithms:
         self.RRT.prox_callback(req.proxList);
         self.RRT.rab_callback(req.RabList);
         self.RRT.pose_callback(req.PosQuat);
+        
+        pose_bot = PoseStamped()
+        pose_bot = self.RRT.getPoseBot()
+        distance_to_tower = math.sqrt(math.pow(4-pose_bot.pose.position.x,2)+math.pow(4-pose_bot.pose.position.y,2))
+       # print("distance to tower ", distance_to_tower)
+       # print("name space ",rospy.get_namespace())
+       # print(req.botID)
 
         if req.reset or self.reset_bug:
             self.WF.init()
@@ -173,9 +183,11 @@ class BugAlgorithms:
             self.odometry_y_array = []
             self.odometry_x_per_array = []
             self.odometry_y_per_array = []
+            
+            self.send_stop = False
         
         #print("close to goal ",self.RRT.getUWBRange())
-        if (self.RRT.getUWBRange()>150):
+        if (distance_to_tower>1.5 ):
             if self.bug_type == 'alg_1':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
             elif self.bug_type == 'alg_2' :
@@ -201,10 +213,12 @@ class BugAlgorithms:
            # numpy.savetxt('rel_y_per.txt',self.odometry_y_per_array,delimiter=',')            
             return GetCmdsResponse(self.twist)
         else:
-            print "bug has reached goal"
             self.twist.linear.x = 0
             self.twist.angular.z = 0
-            stop_sim()
+            if( self.send_stop is False):
+                print "bug has reached goal"
+                stop_sim()
+                self.send_stop = True
             return GetCmdsResponse(self.twist)
 
 
