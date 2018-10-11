@@ -53,7 +53,6 @@ class GradientBugController:
         #Init embedded gradient bug
         self.GB.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
         
-        # Some values that are needed in the loop
         self.current_UWB_range = 0
         self.current_UWB_bearing = 0
         self.rssi_goal_angle_adjust = 0
@@ -123,9 +122,13 @@ class GradientBugController:
         if rssi_noise>-43:
             rssi_noise = 43 
                     
+        
+        #FOR NOW JUST SUBSTITUTE RANGE FOR TRUE RANGE!!
+        self.current_range = self.RRT.getUWBRange()
+                    
         # Call the controller from gradient_bug_v1 (gradient_bug repository)
         twist, self.rssi_goal_angle_adjust = self.GB.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
-                        self.RRT.getHeading(),self.current_UWB_bearing,self.current_UWB_range, rssi_noise,self.RRT.getArgosTime()/10,False, self.WF,self.RRT)
+                        self.RRT.getHeading(),self.current_UWB_bearing, self.current_range, rssi_noise,self.RRT.getArgosTime()/10,False, self.WF,self.RRT)
         
 
 
