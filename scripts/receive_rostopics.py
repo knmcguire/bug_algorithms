@@ -55,6 +55,8 @@ class RecieveROSTopic:
     bearing = 2000.0
     odometry=0;
     rssi_tower = 0;
+    closest_RAB = 2000
+    RAB_list = []
 
     # Collect current heading and odometry from position sensor
     def pose_callback(self,pose):
@@ -73,7 +75,9 @@ class RecieveROSTopic:
 
     # Collect range and bearing to goal (or other bots)
     def rab_callback(self,rab_list):
+        self.RAB_list=[]
         for it in range(0,rab_list.n):
+            self.RAB_list.append(rab_list.Rangebearings[it].range)
             self.range = rab_list.Rangebearings[it].range
             angle = rab_list.Rangebearings[it].angle
             self.bearing = self.wrap_pi(angle)
@@ -154,12 +158,23 @@ class RecieveROSTopic:
         return self.pose_tower
     def getRSSITower(self):
         return self.rssi_tower.data
+    def getClosestRAB(self):
+        self.calculateLowestRAB()
+        return self.closest_RAB
+    
 
+    def calculateLowestRAB(self):
+        self.closest_RAB = 2000
+        for it in range(0,len(self.RAB_list)):
+            if self.RAB_list[it] < self.closest_RAB:
+                    self.closest_RAB = self.RAB_list[it]
+                    
     def calculateLowestValue(self,proxList):
         for it in range(4,len(proxList.proximities)):
             if self.numRangeMax(proxList.proximities[it].value) < self.lowestValue:
                     self.closestObs = proxList.proximities[it]
-                    self.lowestValue = self.numRangeMax(proxList.proximities[it].value)
+                    self.lowestValue = self.numRangeMax(proxList.proximities[it].value)                
+                    
     def calculateRightObstacleBorder(self,proxList):
         deg=numpy.linspace(-0.52,0.52,num=20)
         for it in list(reversed(range(4,len(proxList.proximities)))):

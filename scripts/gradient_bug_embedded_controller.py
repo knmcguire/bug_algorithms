@@ -28,6 +28,8 @@ from copy import deepcopy
 import sys
 sys.path.append('/home/knmcguire/Software/catkin_ws/src/gradient_bug/scripts/bug_algorithms')
 import gradient_bug_v1 
+import gradient_bug_v2 
+
 
 
 
@@ -37,9 +39,12 @@ class GradientBugController:
     WF = wall_following.WallFollowing()
     RRT = receive_rostopics.RecieveROSTopic()
     GB =  gradient_bug_v1.GradientBugController()
+    GB2 =  gradient_bug_v2.GradientBugController()
 
     distance_to_wall = 0;
     rssi_goal_angle_adjust = 0
+    
+    bot_is_close = False
 
 
 
@@ -52,7 +57,8 @@ class GradientBugController:
 
         #Init embedded gradient bug
         self.GB.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
-        
+        self.GB2.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
+
         self.current_UWB_range = 0
         self.current_UWB_bearing = 0
         self.rssi_goal_angle_adjust = 0
@@ -60,7 +66,7 @@ class GradientBugController:
 
 
 
-    def stateMachine(self,RRT,odometry):
+    def stateMachine(self,RRT,odometry,outbound = False, outbound_angle = 0):
         
         
         # Get recieve ros topics
@@ -112,6 +118,9 @@ class GradientBugController:
             
             
         
+
+        
+        
         # the bearing value sometimes comes in the form or an array, just is temp fix!!
         if isinstance(self.current_UWB_bearing,numpy.ndarray):
             self.current_UWB_bearing=float(self.current_UWB_bearing[0])
@@ -122,15 +131,24 @@ class GradientBugController:
         if rssi_noise>-43:
             rssi_noise = 43 
                     
-        
+        if outbound == True:
+            self.current_UWB_bearing =self.wrap_pi(outbound_angle-self.RRT.getHeading() )
         #FOR NOW JUST SUBSTITUTE RANGE FOR TRUE RANGE!!
         self.current_range = self.RRT.getUWBRange()
-                    
-        # Call the controller from gradient_bug_v1 (gradient_bug repository)
-        twist, self.rssi_goal_angle_adjust = self.GB.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
-                        self.RRT.getHeading(),self.current_UWB_bearing, self.current_range, rssi_noise,self.RRT.getArgosTime()/10,False, self.WF,self.RRT)
         
-
+        '''if (self.RRT.getClosestRAB()<100):
+            self.bot_is_close = True
+            print("bot is close!!!")
+        else:
+            self.bot_is_close = False'''
+        
+        # Call the controller from gradient_bug_v1 (gradient_bug repository)
+        if outbound is False:
+            twist, self.rssi_goal_angle_adjust = self.GB.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
+                        self.RRT.getHeading(),self.current_UWB_bearing, self.current_range, rssi_noise, odometry, self.RRT.getArgosTime()/10,False, self.WF,self.RRT,outbound)
+        else:
+            twist, self.rssi_goal_angle_adjust = self.GB2.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
+                        self.RRT.getHeading(),self.current_UWB_bearing, self.current_range, rssi_noise, odometry, self.RRT.getArgosTime()/10,False, self.WF,self.RRT,outbound, self.bot_is_close)
 
         return twist
 

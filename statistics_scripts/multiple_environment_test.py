@@ -61,7 +61,7 @@ def rosloop():
         msg = String()
         msg = bug_name
         switch_bug_pub.publish(msg)
-        time.sleep(2)
+        time.sleep(1)
 
 
         
@@ -115,7 +115,11 @@ def rosloop():
         copyfile('/home/knmcguire/.ros/environment_lines.txt',filename_environment+'/environment_lines.txt')
         
         #Save Trajectory
-        copyfile('/home/knmcguire/.ros/trajectory.txt',filename_environment+'/trajectory.txt')
+        #copyfile('/home/knmcguire/.ros/trajectory.txt',filename_environment+'/trajectory.txt')
+        copyfile('/home/knmcguire/.ros/trajectory1.txt',filename_environment+'/trajectory1.txt')
+        #copyfile('/home/knmcguire/.ros/trajectory2.txt',filename_environment+'/trajectory2.txt')
+        #copyfile('/home/knmcguire/.ros/trajectory3.txt',filename_environment+'/trajectory3.txt')
+
 
         #Save distance
         copyfile('/home/knmcguire/.ros/distances.txt',filename_environment+'/distances.txt')
@@ -125,7 +129,7 @@ def rosloop():
 
         #results.append(environment)
         print environment
-        time.sleep(3)
+        time.sleep(1)
 
     numpy.savetxt(filename+'/made_it.txt',made_it,delimiter=',')
 

@@ -40,6 +40,7 @@ from geometry_msgs.msg import Twist
 from scipy.stats._continuous_distns import beta
 import wall_following
 import receive_rostopics
+import re
 
 class BugAlgorithms:
     cmdVelPub = None
@@ -56,6 +57,11 @@ class BugAlgorithms:
     odometry_perfect = PoseStamped()
     previous_time = 0
     send_stop = False
+    outbound = True
+    outbound_angle = 0
+    start_time = 0
+    opened_file = False
+    pos_save = []
     
     # select the appropiate controller by the appropiate bug
     def getController(self,argument):
@@ -101,6 +107,7 @@ class BugAlgorithms:
             print "Service call failed: %s"%e
 
         self.bug_type = rospy.get_param('bug_algorithms/bug_type')
+        self.outbound_angle = rospy.get_param('bug_algorithms/outbound_angle')
 
         self.bug_controller = self.getController(self.bug_type);
         self.bug_controller.__init__()
@@ -118,9 +125,11 @@ class BugAlgorithms:
 
 
     def switchBug(self,req):
+        print("SWITCH BUG")
         self.bug_controller = self.getController(req.data);
         self.bug_type = req.data
         self.reset_bug = True
+        self.opened_file = False
         print req.data
         try:
             start_sim = rospy.ServiceProxy('/start_sim', StartSim)
@@ -152,13 +161,20 @@ class BugAlgorithms:
         self.RRT.rab_callback(req.RabList);
         self.RRT.pose_callback(req.PosQuat);
         
+        
+        
+        
         # Get the current position of the bot
         pose_bot = PoseStamped()
         pose_bot = self.RRT.getPoseBot()
         
         # Get the distance to the tower
-        distance_to_tower = math.sqrt(math.pow(4-pose_bot.pose.position.x,2)+math.pow(4-pose_bot.pose.position.y,2))
-
+        distance_to_tower = math.sqrt(math.pow(9-pose_bot.pose.position.x,2)+math.pow(9-pose_bot.pose.position.y,2))
+        
+        number_id = int(filter(str.isdigit, req.botID.data))
+        
+       # print self.RRT.getArgosTime()/10 
+        
         # If the bug algorithm is reset or the bug has been changed, initialize everythong
         if req.reset or self.reset_bug:
             self.WF.init()
@@ -167,9 +183,30 @@ class BugAlgorithms:
             self.odometry = PoseStamped()
             self.odometry_perfect = PoseStamped()
             self.send_stop = False
+            self.outbound = True
+            self.start_time = self.RRT.getArgosTime()
+            
+        if req.reset or self.opened_file is False:
+            self.F = open("trajectory"+str(number_id)+".txt","w")
+            self.opened_file = True 
+            
+        #Get time and change outbound to back after 3 min
+        if ( self.RRT.getArgosTime()-self.start_time)/10>300+number_id*10:
+            self.outbound = False
+            
+            
+        if self.RRT.getArgosTime()%1000 is 0:
+            print self.RRT.getArgosTime()
             
         # If the bug is not near the tower (yet)
-        if (distance_to_tower>1.5 ):
+
+        if ((distance_to_tower>1.5 or self.outbound == True )):
+            
+            self.F.write("%5.2f, %5.2f\n" %(req.PosQuat.pose.position.x,req.PosQuat.pose.position.y));       
+           # self.pos_save.append(req.PosQuat.pose.position.x)
+           # self.pos_save.append(req.PosQuat.pose.position.y)
+           # self.pos_save.append([])
+
             #Select the bug statemachine based on the launch file
             if self.bug_type == 'alg_1':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
@@ -178,27 +215,37 @@ class BugAlgorithms:
             elif self.bug_type == 'i_bug':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),self.noise_level)
             else:
-                self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level))
-        
+                if self.RRT.getArgosTime()/10<number_id*10:
+                    self.twist= Twist()
+                else:
+                    self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level), self.outbound, self.outbound_angle)
+                
             #Save values for the debugging (matlab)
                 # Odometry with drift
-            numpy.savetxt('rel_x.txt',[self.odometry.pose.position.x],delimiter=',')
-            numpy.savetxt('rel_y.txt',[self.odometry.pose.position.y],delimiter=',')
+           # numpy.savetxt('rel_x.txt',[self.odometry.pose.position.x],delimiter=',')
+           # numpy.savetxt('rel_y.txt',[self.odometry.pose.position.y],delimiter=',')
                 # Odometry perfect
-            self.get_odometry_from_commands_perfect()
-            numpy.savetxt('rel_x_per.txt',[self.odometry_perfect.pose.position.x],delimiter=',')
-            numpy.savetxt('rel_y_per.txt',[self.odometry_perfect.pose.position.y],delimiter=',') 
+           # self.get_odometry_from_commands_perfect()
+           # numpy.savetxt('rel_x_per.txt',[self.odometry_perfect.pose.position.x],delimiter=',')
+           # numpy.savetxt('rel_y_per.txt',[self.odometry_perfect.pose.position.y],delimiter=',') 
             
             #Return the commands to the controller           
             return GetCmdsResponse(self.twist)
         else:
             #Stop the bug and sent a stop signal for the simulator
+            
+            
             self.twist.linear.x = 0
             self.twist.angular.z = 0
+            #self.F = open("trajectory"+str(number_id)+".txt","w")
+           # self.F.close()
             if( self.send_stop is False):
+              #  numpy.savetxt("trajectory"+str(number_id)+".txt",self.pos_save,delimiter=',')
                 print "bug has reached goal"
                 stop_sim()
                 self.send_stop = True
+                self.outbound = True
+                self.F.close()
             return GetCmdsResponse(self.twist)
 
     # Make a (noisy) odometry measurment based on the inputs on the system, based on a guassian, returns an odometry position.
