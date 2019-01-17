@@ -26,9 +26,9 @@
       	<param name="bug_type" value="gradient_embedded_bug" />
         <param name="outbound_angle" value="-3.14"/>
       </node>
-   </group>
+   </group-->
 
-   <group ns="bot4">
+   <!--group ns="bot4">
       <node pkg="bug_algorithms" type="bug_algorithms.py" name="bug_algorithms" output="screen">
       	<param name="bug_type" value="gradient_embedded_bug" />
         <param name="outbound_angle" value="-2.09"/>
