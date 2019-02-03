@@ -18,7 +18,11 @@ from shutil import copyfile
 def rosloop():
     bug_name = 'gradient_embedded_bug'
     noise_level = 0.2
+    
     amount_of_environment = 100
+    amount_of_agents = 6
+    
+    
     rospy.wait_for_service('/indoor_gen')
     indoor_gen_srv = rospy.ServiceProxy('/indoor_gen',Trigger)
     environment_random_pub = rospy.Publisher('/random_environment', Bool, queue_size=10)
@@ -115,6 +119,13 @@ def rosloop():
         copyfile('/home/knmcguire/.ros/environment_lines.txt',filename_environment+'/environment_lines.txt')
         
         #Save Trajectory
+        for it_a in range(0,amount_of_agents):
+            org_file = '/home/knmcguire/.ros/trajectory'+str(it_a+1)+'.txt'
+            new_file = filename_environment+'/trajectory'+str(it_a+1)+'.txt'
+            
+            copyfile(org_file,new_file)
+
+            
         #copyfile('/home/knmcguire/.ros/trajectory.txt',filename_environment+'/trajectory.txt')
         copyfile('/home/knmcguire/.ros/trajectory1.txt',filename_environment+'/trajectory1.txt')
         #copyfile('/home/knmcguire/.ros/trajectory2.txt',filename_environment+'/trajectory2.txt')

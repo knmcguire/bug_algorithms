@@ -21,8 +21,12 @@ from std_msgs.msg import String
 from std_msgs.msg import Bool
 from std_msgs.msg import Float64
 from std_msgs.msg import Float32
+from gradient_bug.msg import goal_angle
 
 from std_srvs.srv import Empty
+
+import message_filters
+
 
 import com_bug_controller
 import bug_2_controller
@@ -44,6 +48,7 @@ import re
 
 class BugAlgorithms:
     cmdVelPub = None
+    goalAnglePub=None
     bug_type="com_bug";
     bug_controller =  com_bug_controller.ComBugController()
     RRT = receive_rostopics.RecieveROSTopic()
@@ -62,6 +67,7 @@ class BugAlgorithms:
     start_time = 0
     opened_file = False
     pos_save = []
+    angle_goal = 0
     
     # select the appropiate controller by the appropiate bug
     def getController(self,argument):
@@ -84,6 +90,9 @@ class BugAlgorithms:
     def __init__(self):
         # Subscribe to topics and init a publisher
         self.cmdVelPub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+        self.goalAnglePub = rospy.Publisher('goal_angle', goal_angle, queue_size=10)
+        self.madeItPub = rospy.Publisher('made_it', Bool, queue_size=10)
+
         #rospy.Subscriber('proximity', ProximityList, self.RRT.prox_callback,queue_size=100)
         #rospy.Subscriber('rangebearing', RangebearingList, self.RRT.rab_callback,queue_size=100)
         #rospy.Subscriber('position', PoseStamped, self.RRT.pose_callback,queue_size=100)
@@ -94,6 +103,39 @@ class BugAlgorithms:
         rospy.Subscriber('/noise_level', Float64, self.noise_level_cb,queue_size=10)
         rospy.Subscriber('RSSI_to_tower', Float32, self.RRT.rssi_tower_callback,queue_size=10)
 
+
+        
+          
+        rospy.Subscriber("/bot1/goal_angle",goal_angle,self.RRT.goal_angle_bot1_callback)
+        rospy.Subscriber("/bot2/goal_angle",goal_angle,self.RRT.goal_angle_bot2_callback)
+        rospy.Subscriber("/bot3/goal_angle",goal_angle,self.RRT.goal_angle_bot3_callback)
+        rospy.Subscriber("/bot4/goal_angle",goal_angle,self.RRT.goal_angle_bot4_callback)
+        rospy.Subscriber("/bot5/goal_angle",goal_angle,self.RRT.goal_angle_bot5_callback)
+        rospy.Subscriber("/bot6/goal_angle",goal_angle,self.RRT.goal_angle_bot6_callback)
+        rospy.Subscriber("/bot7/goal_angle",goal_angle,self.RRT.goal_angle_bot7_callback)
+        rospy.Subscriber("/bot8/goal_angle",goal_angle,self.RRT.goal_angle_bot8_callback)
+
+        rospy.Subscriber("/bot1/made_it",Bool,self.RRT.made_it_bot1_callback)
+        rospy.Subscriber("/bot2/made_it",Bool,self.RRT.made_it_bot2_callback)
+        rospy.Subscriber("/bot3/made_it",Bool,self.RRT.made_it_bot3_callback)
+        rospy.Subscriber("/bot4/made_it",Bool,self.RRT.made_it_bot4_callback)
+        rospy.Subscriber("/bot5/made_it",Bool,self.RRT.made_it_bot5_callback)
+        rospy.Subscriber("/bot6/made_it",Bool,self.RRT.made_it_bot6_callback)
+        rospy.Subscriber("/bot7/made_it",Bool,self.RRT.made_it_bot7_callback)
+        rospy.Subscriber("/bot8/made_it",Bool,self.RRT.made_it_bot8_callback)
+
+        
+        '''
+        goal_angle_sub = []
+        topic_name = "/bot"+ str(it+1)+"/goal_angle"
+           
+            
+        goal_angle_sub_temp = message_filters.Subscriber(topic_name,goal_angle)
+            goal_angle_sub.append(goal_angle_sub_temp)
+        ts = message_filters.TimeSynchronizer([goal_angle_sub[0],goal_angle_sub[1]], 10)
+        ts.registerCallback(self.RRT.goal_angle_callback)
+        '''
+        
         #Wait for services to begin
         rospy.wait_for_service('/start_sim')
         s1 = rospy.Service('get_vel_cmd',GetCmds,self.runStateMachine)
@@ -169,7 +211,8 @@ class BugAlgorithms:
         pose_bot = self.RRT.getPoseBot()
         
         # Get the distance to the tower
-        distance_to_tower = math.sqrt(math.pow(9-pose_bot.pose.position.x,2)+math.pow(9-pose_bot.pose.position.y,2))
+        distance_to_tower = math.sqrt(math.pow(pose_bot.pose.position.x,2)+math.pow(pose_bot.pose.position.y,2))
+        angle_to_tower = math.atan2(pose_bot.pose.position.y, pose_bot.pose.position.x)
         
         number_id = int(filter(str.isdigit, req.botID.data))
         
@@ -196,10 +239,12 @@ class BugAlgorithms:
             
             
         if self.RRT.getArgosTime()%1000 is 0:
-            print self.RRT.getArgosTime()
+            print(self.RRT.getArgosTime()-self.start_time)
             
         # If the bug is not near the tower (yet)
-
+        #if self.RRT.getArgosTime()%100 is 0:
+        #    print(distance_to_tower)
+            
         if ((distance_to_tower>1.5 or self.outbound == True )):
             
             self.F.write("%5.2f, %5.2f\n" %(req.PosQuat.pose.position.x,req.PosQuat.pose.position.y));       
@@ -218,7 +263,7 @@ class BugAlgorithms:
                 if self.RRT.getArgosTime()/10<number_id*10:
                     self.twist= Twist()
                 else:
-                    self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level), self.outbound, self.outbound_angle)
+                    self.twist, self.angle_goal = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level), self.outbound, self.outbound_angle, number_id)
                 
             #Save values for the debugging (matlab)
                 # Odometry with drift
@@ -229,16 +274,33 @@ class BugAlgorithms:
            # numpy.savetxt('rel_x_per.txt',[self.odometry_perfect.pose.position.x],delimiter=',')
            # numpy.savetxt('rel_y_per.txt',[self.odometry_perfect.pose.position.y],delimiter=',') 
             
-            #Return the commands to the controller           
+            msg_temp = goal_angle()
+            msg_temp.goal_angle.data = self.angle_goal
+            msg_temp.header.stamp = rospy.Time.now()
+            self.goalAnglePub.publish(msg_temp)
+            
+            #Return the commands to the controller  
+            msg_madeit = Bool()
+            msg_madeit.data = False;
+            self.madeItPub.publish(msg_madeit)         
             return GetCmdsResponse(self.twist)
         else:
             #Stop the bug and sent a stop signal for the simulator
             
+            if(distance_to_tower<0.5):
+                self.twist.linear.x = 0
+                self.twist.angular.z = 0
+            else:
+                self.twist = self.go_to_tower(angle_to_tower)
             
-            self.twist.linear.x = 0
-            self.twist.angular.z = 0
+            
             #self.F = open("trajectory"+str(number_id)+".txt","w")
            # self.F.close()
+           
+            msg_madeit = Bool()
+            msg_madeit.data = True;
+            self.madeItPub.publish(msg_madeit) 
+
             if( self.send_stop is False):
               #  numpy.savetxt("trajectory"+str(number_id)+".txt",self.pos_save,delimiter=',')
                 print "bug has reached goal"
@@ -277,6 +339,28 @@ class BugAlgorithms:
     # Retrieve noise level from topic
     def noise_level_cb(self,req):
         self.noise_level = req.data;
+    
+    def go_to_tower(self,angle_tower):
+        twist = Twist()
+        if self.logicIsCloseTo(self.wrap_pi(3.14-(self.RRT.getHeading()-angle_tower)),0,0.1):
+            twist.linear.x = 0.5
+            twist.angular.z = 0
+        else:
+            twist.linear.x = 0
+            twist.angular.z = 1.0
+        return twist
+        
+    # See if a value is within a margin from the wanted value
+    def logicIsCloseTo(self, real_value = 0.0, checked_value =0.0, margin=0.05):
+
+        if real_value> checked_value-margin and real_value< checked_value+margin:
+            return True
+        else:
+            return False
+
+
+    def wrap_pi(self, angles_rad):
+        return numpy.mod(angles_rad+numpy.pi, 2.0 * numpy.pi) - numpy.pi
 
 
 if __name__ == '__main__':

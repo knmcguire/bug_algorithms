@@ -56,8 +56,59 @@ class RecieveROSTopic:
     odometry=0;
     rssi_tower = 0;
     closest_RAB = 2000
+    closest_RAB_index = 0
     RAB_list = []
+    
 
+    
+    
+    goal_angle_list = [0,0,0,0,0,0,0,0]
+    made_it_list = [False,False,False,False,False,False,False,False]
+
+    
+    
+    def goal_angle_bot1_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[0]=bot.goal_angle.data
+
+    def goal_angle_bot2_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[1]=bot.goal_angle.data
+
+    def goal_angle_bot3_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[2]=bot.goal_angle.data
+        
+    def goal_angle_bot4_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[3]=bot.goal_angle.data
+        
+    def goal_angle_bot5_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[4]=bot.goal_angle.data
+
+    def goal_angle_bot6_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[5]=bot.goal_angle.data
+    def goal_angle_bot7_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[6]=bot.goal_angle.data
+    def goal_angle_bot8_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[7]=bot.goal_angle.data
+    def made_it_bot1_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[0]=bot.data
+
+    def made_it_bot2_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[1]=bot.data
+
+    def made_it_bot3_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[2]=bot.data
+        
+    def made_it_bot4_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[3]=bot.data
+        
+    def made_it_bot5_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[4]=bot.data
+
+    def made_it_bot6_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[5]=bot.data
+    def made_it_bot7_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[6]=bot.data
+    def made_it_bot8_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[7]=bot.data
     # Collect current heading and odometry from position sensor
     def pose_callback(self,pose):
         (roll,pitch,yaw) = euler_from_quaternion([pose.pose.orientation.x, \
@@ -90,7 +141,6 @@ class RecieveROSTopic:
     # Several functions for calculating
     def prox_callback(self, proxList):
 
-
         # Find the closest obstacle (other robot or wall).  The closest obstacle
         # is the one with the greatest 'value'.
         self.closestObs = None
@@ -109,6 +159,7 @@ class RecieveROSTopic:
         self.range_front_right = self.numRangeMax( proxList.proximities[4].value);
         self.range_middle = self.numRangeMax( proxList.proximities[13].value);
         self.argos_time = proxList.header.seq
+
 
         #Calculate the neares obstacle in the proximity front wedge sesor
         self.calculateLowestValue(proxList)
@@ -160,14 +211,19 @@ class RecieveROSTopic:
         return self.rssi_tower.data
     def getClosestRAB(self):
         self.calculateLowestRAB()
-        return self.closest_RAB
-    
+        return self.closest_RAB, self.closest_RAB_index
+    def getGoalAngleID(self, id):
+        return self.goal_angle_list[id-1]
+    def getMadeItID(self,id):
+        return self.made_it_list[id-1]
+
 
     def calculateLowestRAB(self):
         self.closest_RAB = 2000
         for it in range(0,len(self.RAB_list)):
             if self.RAB_list[it] < self.closest_RAB:
                     self.closest_RAB = self.RAB_list[it]
+                    self.closest_RAB_index = it
                     
     def calculateLowestValue(self,proxList):
         for it in range(4,len(proxList.proximities)):

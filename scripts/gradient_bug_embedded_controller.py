@@ -29,7 +29,7 @@ import sys
 sys.path.append('/home/knmcguire/Software/catkin_ws/src/gradient_bug/scripts/bug_algorithms')
 import gradient_bug_v1 
 import gradient_bug_v2 
-
+import gradient_bug_v3 
 
 
 
@@ -40,9 +40,11 @@ class GradientBugController:
     RRT = receive_rostopics.RecieveROSTopic()
     GB =  gradient_bug_v1.GradientBugController()
     GB2 =  gradient_bug_v2.GradientBugController()
+    GB3 =  gradient_bug_v3.GradientBugController()
 
     distance_to_wall = 0;
     rssi_goal_angle_adjust = 0
+    goal_angle = 0
     
     bot_is_close = False
 
@@ -56,9 +58,9 @@ class GradientBugController:
         self.first_run = 1
 
         #Init embedded gradient bug
-        self.GB.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
-        self.GB2.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
-
+       # self.GB.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
+        #self.GB2.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
+        self.GB3.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed())
         self.current_UWB_range = 0
         self.current_UWB_bearing = 0
         self.rssi_goal_angle_adjust = 0
@@ -66,7 +68,7 @@ class GradientBugController:
 
 
 
-    def stateMachine(self,RRT,odometry,outbound = False, outbound_angle = 0):
+    def stateMachine(self,RRT,odometry,outbound = False, outbound_angle = 0, own_id=1):
         
         
         # Get recieve ros topics
@@ -80,14 +82,19 @@ class GradientBugController:
         
         #If it is the first loop of the run
         if self.first_run:
+            self.GB3.init(self.distance_to_wall,self.WF.getMaximumForwardSpeed(),self.WF.getMaximumRotationSpeed(),outbound_angle)
+
             self.bot_init_position = self.RRT.getPoseBot(); # Get the initial position of the bot 
             pose_tower_abs = self.RRT.getPoseTower();   # Get the position of the tower
             #Get the relative position to the tower (CHECK IF THIS IS STILL POSSIBLE!)
             self.pose_tower.pose.position.x = pose_tower_abs.pose.position.x - self.bot_init_position.pose.position.x;
             self.pose_tower.pose.position.y = pose_tower_abs.pose.position.y - self.bot_init_position.pose.position.y;
+            
+
+            
             # THIS MUST BE GONE IF WE ARE DOING HOMING AKA STARTING FROM TOWER!!!
-            if( abs(pose_tower_abs.pose.position.x)> 0.0):
-                self.first_run = False
+            #if( abs(pose_tower_abs.pose.position.x)> 0.0):
+            self.first_run = False
 
 
         else:
@@ -127,30 +134,50 @@ class GradientBugController:
             
         #Retrieve the rssi_noise            
         rssi_noise_list =  numpy.random.normal(self.RRT.getRSSITower(),1,1);
-        rssi_noise =  float(rssi_noise_list[0])
+        rssi_noise =  round(float(rssi_noise_list[0]))
+        #rssi_noise= round(self.RRT.getRSSITower())
         if rssi_noise>-43:
-            rssi_noise = 43 
+            rssi_noise = -43 
                     
-        if outbound == True:
-            self.current_UWB_bearing =self.wrap_pi(outbound_angle-self.RRT.getHeading() )
+        #if outbound == True:
+         #   self.current_UWB_bearing =self.wrap_pi(outbound_angle-self.RRT.getHeading() )
         #FOR NOW JUST SUBSTITUTE RANGE FOR TRUE RANGE!!
         self.current_range = self.RRT.getUWBRange()
         
+        closest_distance_other_bot, other_id= self.RRT.getClosestRAB()
+        other_made_it = self.RRT.getMadeItID(other_id)
+        priority= True
+        if(other_id+1<own_id and other_made_it is not True):
+            priority = False
+        else:
+            priority = True
+            
+       # print("own id + other_id+ priority",own_id,other_id,priority)
+            
+        goal_angle_other = self.RRT.getGoalAngleID(other_id)
+       # print("priority bot", closest_distance_other_bot, own_id, other_id, priority )
+        
+        #GRADIENTBUG: get both distance and id of closest bot
         '''if (self.RRT.getClosestRAB()<100):
             self.bot_is_close = True
             print("bot is close!!!")
         else:
             self.bot_is_close = False'''
         
+        twist, self.rssi_goal_angle_adjust, self.goal_angle = self.GB3.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
+                        self.RRT.getHeading(), self.current_range, -1*rssi_noise, odometry, self.RRT.getArgosTime()/10,False, self.WF,self.RRT,outbound,
+                        closest_distance_other_bot/100.0,priority,goal_angle_other)
+        
         # Call the controller from gradient_bug_v1 (gradient_bug repository)
+        '''
         if outbound is False:
             twist, self.rssi_goal_angle_adjust = self.GB.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
                         self.RRT.getHeading(),self.current_UWB_bearing, self.current_range, rssi_noise, odometry, self.RRT.getArgosTime()/10,False, self.WF,self.RRT,outbound)
         else:
             twist, self.rssi_goal_angle_adjust = self.GB2.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
                         self.RRT.getHeading(),self.current_UWB_bearing, self.current_range, rssi_noise, odometry, self.RRT.getArgosTime()/10,False, self.WF,self.RRT,outbound, self.bot_is_close)
-
-        return twist
+        '''
+        return twist, self.goal_angle
 
 
     # See if a value is within a margin from the wanted value
