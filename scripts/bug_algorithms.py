@@ -114,6 +114,7 @@ class BugAlgorithms:
         rospy.Subscriber("/bot6/goal_angle",goal_angle,self.RRT.goal_angle_bot6_callback)
         rospy.Subscriber("/bot7/goal_angle",goal_angle,self.RRT.goal_angle_bot7_callback)
         rospy.Subscriber("/bot8/goal_angle",goal_angle,self.RRT.goal_angle_bot8_callback)
+        rospy.Subscriber("/bot9/goal_angle",goal_angle,self.RRT.goal_angle_bot9_callback)
 
         rospy.Subscriber("/bot1/made_it",Bool,self.RRT.made_it_bot1_callback)
         rospy.Subscriber("/bot2/made_it",Bool,self.RRT.made_it_bot2_callback)
@@ -123,6 +124,7 @@ class BugAlgorithms:
         rospy.Subscriber("/bot6/made_it",Bool,self.RRT.made_it_bot6_callback)
         rospy.Subscriber("/bot7/made_it",Bool,self.RRT.made_it_bot7_callback)
         rospy.Subscriber("/bot8/made_it",Bool,self.RRT.made_it_bot8_callback)
+        rospy.Subscriber("/bot9/made_it",Bool,self.RRT.made_it_bot9_callback)
 
         
         '''
@@ -245,7 +247,7 @@ class BugAlgorithms:
         #if self.RRT.getArgosTime()%100 is 0:
         #    print(distance_to_tower)
             
-        if ((distance_to_tower>1.5 or self.outbound == True )):
+        if ((distance_to_tower>2.5 or self.outbound == True )):
             
             self.F.write("%5.2f, %5.2f\n" %(req.PosQuat.pose.position.x,req.PosQuat.pose.position.y));       
            # self.pos_save.append(req.PosQuat.pose.position.x)

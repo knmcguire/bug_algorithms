@@ -62,8 +62,8 @@ class RecieveROSTopic:
 
     
     
-    goal_angle_list = [0,0,0,0,0,0,0,0]
-    made_it_list = [False,False,False,False,False,False,False,False]
+    goal_angle_list = [0,0,0,0,0,0,0,0,0]
+    made_it_list = [False,False,False,False,False,False,False,False,False]
 
     
     
@@ -88,6 +88,8 @@ class RecieveROSTopic:
         self.goal_angle_list[6]=bot.goal_angle.data
     def goal_angle_bot8_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
         self.goal_angle_list[7]=bot.goal_angle.data
+    def goal_angle_bot9_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.goal_angle_list[8]=bot.goal_angle.data
     def made_it_bot1_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
         self.made_it_list[0]=bot.data
 
@@ -109,6 +111,9 @@ class RecieveROSTopic:
         self.made_it_list[6]=bot.data
     def made_it_bot8_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
         self.made_it_list[7]=bot.data
+    def made_it_bot9_callback(self,bot):#, bot3, bot4, bot5, bot6, bot7, bog8, bot9):
+        self.made_it_list[8]=bot.data
+        
     # Collect current heading and odometry from position sensor
     def pose_callback(self,pose):
         (roll,pitch,yaw) = euler_from_quaternion([pose.pose.orientation.x, \

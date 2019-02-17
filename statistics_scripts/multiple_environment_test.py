@@ -20,7 +20,7 @@ def rosloop():
     noise_level = 0.2
     
     amount_of_environment = 100
-    amount_of_agents = 6
+    amount_of_agents = 10
     
     
     rospy.wait_for_service('/indoor_gen')
@@ -45,7 +45,7 @@ def rosloop():
     os.makedirs(filename)
 
     time.sleep(3)
-    for it in range (0,amount_of_environment):
+    for it in range (79,amount_of_environment):
         
         filename_environment = filename+"/environment"+format(it)
         os.makedirs(filename_environment)

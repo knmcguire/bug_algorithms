@@ -49,7 +49,7 @@
       </node>
    </group>
 
-   <!--group ns="bot7">
+   <group ns="bot7">
       <node pkg="bug_algorithms" type="bug_algorithms.py" name="bug_algorithms" output="screen">
       	<param name="bug_type" value="gradient_embedded_bug" />
         <param name="outbound_angle" value="2.36"/>
@@ -61,16 +61,21 @@
       	<param name="bug_type" value="gradient_embedded_bug" />
         <param name="outbound_angle" value="-0.79"/>
       </node>
-   </group-->
+   </group>
 
-   <!--group ns="bot9">
+   <group ns="bot9">
       <node pkg="bug_algorithms" type="bug_algorithms.py" name="bug_algorithms" output="screen">
       	<param name="bug_type" value="gradient_embedded_bug" />
         <param name="outbound_angle" value="-2.97"/>
       </node>
-   </group-->
+   </group>
 
-
+   <group ns="bot10">
+      <node pkg="bug_algorithms" type="bug_algorithms.py" name="bug_algorithms" output="screen">
+      	<param name="bug_type" value="gradient_embedded_bug" />
+        <param name="outbound_angle" value="0.79"/>
+      </node>
+   </group>
   <node pkg="bug_algorithms" type="timed_roslaunch.sh"
     args="2 argos_bridge argos_timed_launch.launch"
     name="timed_roslaunch" output="screen" />
