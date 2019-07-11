@@ -116,8 +116,8 @@ class GradientBugController:
             adjusted_theta = self.wrap_pi(self.rssi_goal_angle_adjust)
             rel_x_adjust = save_pos_rel_x*numpy.math.cos(adjusted_theta)-save_pos_rel_y*numpy.math.sin(adjusted_theta)
             rel_y_adjust = save_pos_rel_x*numpy.math.sin(adjusted_theta)+save_pos_rel_y*numpy.math.cos(adjusted_theta)
-            numpy.savetxt('rel_loc_x.txt',[rel_x_adjust],delimiter=',')
-            numpy.savetxt('rel_loc_y.txt',[rel_y_adjust],delimiter=',')
+            #numpy.savetxt('rel_loc_x.txt',[rel_x_adjust],delimiter=',')
+            #numpy.savetxt('rel_loc_y.txt',[rel_y_adjust],delimiter=',')
 
             # Get angle to goal and angle to goal
             self.current_UWB_angle =  self.wrap_pi(numpy.arctan2(rel_y,rel_x))
@@ -167,6 +167,9 @@ class GradientBugController:
         twist, self.rssi_goal_angle_adjust, self.goal_angle = self.GB3.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
                         self.RRT.getHeading(), self.current_range, -1*rssi_noise, odometry, self.RRT.getArgosTime()/10,False, self.WF,self.RRT,outbound,
                         closest_distance_other_bot/100.0,priority,goal_angle_other)
+        
+        if closest_distance_other_bot/100.0<0.2:
+            twist = Twist()
         
         # Call the controller from gradient_bug_v1 (gradient_bug repository)
         '''
