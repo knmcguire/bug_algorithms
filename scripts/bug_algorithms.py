@@ -233,6 +233,7 @@ class BugAlgorithms:
             
         if req.reset or self.opened_file is False:
             self.F = open("trajectory"+str(number_id)+".txt","w")
+            self.F_state = open("state_distance"+str(number_id)+".txt","w")
             self.opened_file = True 
             
         #Get time and change outbound to back after 3 min
@@ -255,6 +256,8 @@ class BugAlgorithms:
            # self.pos_save.append([])
 
             #Select the bug statemachine based on the launch file
+            gb_state_nr = 0
+            closest_distance_other_bot = 0
             if self.bug_type == 'alg_1':
                 self.twist = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(0.0),0.0,self.noise_level)
             elif self.bug_type == 'alg_2' :
@@ -265,8 +268,11 @@ class BugAlgorithms:
                 if self.RRT.getArgosTime()/10<number_id*10:
                     self.twist= Twist()
                 else:
-                    self.twist, self.angle_goal = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level), self.outbound, self.outbound_angle, number_id)
+                    self.twist, self.angle_goal, gb_state_nr, closest_distance_other_bot = self.bug_controller.stateMachine(self.RRT,self.get_odometry_from_commands(self.noise_level), self.outbound, self.outbound_angle, number_id)
                 
+                
+            self.F_state.write("%d, %5.2f\n" %(gb_state_nr, closest_distance_other_bot));       
+
             #Save values for the debugging (matlab)
                 # Odometry with drift
            # numpy.savetxt('rel_x.txt',[self.odometry.pose.position.x],delimiter=',')

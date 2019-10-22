@@ -164,12 +164,25 @@ class GradientBugController:
         else:
             self.bot_is_close = False'''
         
-        twist, self.rssi_goal_angle_adjust, self.goal_angle = self.GB3.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
+        twist, self.rssi_goal_angle_adjust, self.goal_angle, gb_state = self.GB3.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
                         self.RRT.getHeading(), self.current_range, -1*rssi_noise, odometry, self.RRT.getArgosTime()/10,False, self.WF,self.RRT,outbound,
                         closest_distance_other_bot/100.0,priority,goal_angle_other)
         
-        if closest_distance_other_bot/100.0<0.2:
-            twist = Twist()
+
+        gb_state_nr=0
+        if gb_state is "FORWARD":
+            gb_state_nr = 1
+        elif gb_state is "WALL_FOLLOWING":
+            gb_state_nr = 2
+        elif gb_state is "ROTATE_TO_GOAL":
+            gb_state_nr = 3
+        elif gb_state is "MOVE_OUT_OF_WAY":
+            gb_state_nr= 4
+        
+        #numpy.savetxt('state_distance'+str(own_id)+'.txt',[gb_state_nr,closest_distance_other_bot] ,delimiter=',')
+        
+        '''if closest_distance_other_bot/100.0<0.2:
+            twist = Twist()'''
         
         # Call the controller from gradient_bug_v1 (gradient_bug repository)
         '''
@@ -180,7 +193,7 @@ class GradientBugController:
             twist, self.rssi_goal_angle_adjust = self.GB2.stateMachine(self.RRT.getRealDistanceToWall(),self.RRT.getRangeRight(),self.RRT.getRangeLeft(),
                         self.RRT.getHeading(),self.current_UWB_bearing, self.current_range, rssi_noise, odometry, self.RRT.getArgosTime()/10,False, self.WF,self.RRT,outbound, self.bot_is_close)
         '''
-        return twist, self.goal_angle
+        return twist, self.goal_angle, gb_state_nr, closest_distance_other_bot
 
 
     # See if a value is within a margin from the wanted value

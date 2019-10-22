@@ -20,7 +20,7 @@ def rosloop():
     noise_level = 0.2
     
     amount_of_environment = 100
-    amount_of_agents = 6
+    amount_of_agents = 1
     
     
     rospy.wait_for_service('/indoor_gen')
@@ -122,12 +122,16 @@ def rosloop():
         for it_a in range(0,amount_of_agents):
             org_file = '/home/knmcguire/.ros/trajectory'+str(it_a+1)+'.txt'
             new_file = filename_environment+'/trajectory'+str(it_a+1)+'.txt'
-            
             copyfile(org_file,new_file)
+            
+            org_file = '/home/knmcguire/.ros/state_distance'+str(it_a+1)+'.txt'
+            new_file = filename_environment+'/state_distance'+str(it_a+1)+'.txt'
+            copyfile(org_file,new_file)
+            
 
             
         #copyfile('/home/knmcguire/.ros/trajectory.txt',filename_environment+'/trajectory.txt')
-        copyfile('/home/knmcguire/.ros/trajectory1.txt',filename_environment+'/trajectory1.txt')
+        #copyfile('/home/knmcguire/.ros/trajectory1.txt',filename_environment+'/trajectory1.txt')
         #copyfile('/home/knmcguire/.ros/trajectory2.txt',filename_environment+'/trajectory2.txt')
         #copyfile('/home/knmcguire/.ros/trajectory3.txt',filename_environment+'/trajectory3.txt')
 
